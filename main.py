@@ -110,8 +110,32 @@ class Window(tk.Tk):
     def __init__(self, project: Project, **kwargs):
         super().__init__(**kwargs)
         self.project = project
-        self.canvas = CanvasImage(self, bd=2)
-        tk.Button(self, text='Open',
+        self._setup_ui()
+
+    def _setup_ui(self):
+        self.geometry(
+            f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}")
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        center = tk.Frame(self, bg='gray2', width=50,
+                          height=40, padx=3, pady=3)
+        center.grid(row=1, sticky="nsew")
+        center.grid_rowconfigure(0, weight=1)
+        center.grid_columnconfigure(1, weight=1)
+
+        left_panel = tk.Frame(center, bg='blue', width=200, height=190)
+        center_widget = tk.Frame(center, bg='yellow', width=250,
+                                 height=190, padx=3, pady=3)
+        right_panel = tk.Frame(center, bg='green', width=100,
+                               height=190, padx=3, pady=3)
+
+        left_panel.grid(row=0, column=0, sticky="ns")
+        center_widget.grid(row=0, column=1, sticky="nsew")
+        right_panel.grid(row=0, column=2, sticky="ns")
+
+        self.canvas = CanvasImage(center_widget, bd=2)
+        tk.Button(center_widget, text='Open',
                   comman=self.canvas.open_image).pack()
         self.canvas.pack(expand=True, fill='both', padx=10, pady=10)
 
@@ -123,5 +147,5 @@ if __name__ == '__main__':
         data = json.load(f)
         project = Project(data)
         project.print()
-#        window = Window(project)
-#        window.mainloop()
+        window = Window(project)
+        window.mainloop()
