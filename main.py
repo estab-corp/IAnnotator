@@ -16,21 +16,25 @@ class Project:
         class Annotation:
             def __init__(self, data: dict):
                 self.label: str = data["label"]
-                self.center_x = data["coordinates"]["x"]
-                self.center_y = data["coordinates"]["y"]
+                center_x = data["coordinates"]["x"]
+                center_y = data["coordinates"]["y"]
                 self.width = data["coordinates"]["width"]
                 self.height = data["coordinates"]["height"]
+                self.x = center_x - self.width/2
+                self.y = center_y - self.height/2
 
             def print(self):
                 print(
-                    f"\tlabel={self.label} x={self.center_x} y={self.center_y} w={self.width} h={self.height}")
+                    f"\tlabel={self.label} x={self.x} y={self.y} w={self.width} h={self.height}")
 
             def save(self) -> dict:
+                center_x = self.x + self.width/2
+                center_y = self.y + self.height/2
                 ret = {
                     "label": self.label,
                     "coordinates": {
-                        "x": self.center_x,
-                        "y": self.center_y,
+                        "x": center_x,
+                        "y": center_y,
                         "width": self.width,
                         "height": self.height,
                     }
@@ -92,7 +96,7 @@ class CanvasImage(tk.Canvas):
         self.image_id = None
         self.image = None
         self.selected_annotation_idx = -1
-
+        self.move_origin_offset = (0, 0)
         self.is_resizing = False
         self.annotations: List[Project.Image.Annotation] = []
         self.rect_ids = []
@@ -111,18 +115,18 @@ class CanvasImage(tk.Canvas):
         real_x = event.x/self.ratio
         real_y = event.y/self.ratio
         if self.is_resizing:
-            annotation.width = real_x-annotation.center_x
-            annotation.height = real_y-annotation.center_y
+            annotation.width = real_x-annotation.x
+            annotation.height = real_y-annotation.y
         else:
-            annotation.center_x = real_x
-            annotation.center_y = real_y
+            annotation.x = real_x - self.move_origin_offset[0]
+            annotation.y = real_y - self.move_origin_offset[1]
         self.draw_annotations()
 
     def on_click(self, event):
         self.selected_annotation_idx = -1
         for a_id, annotation in enumerate(self.annotations):
-            x = (annotation.center_x - (annotation.width/2))*self.ratio
-            y = (annotation.center_y - (annotation.height/2))*self.ratio
+            x = annotation.x*self.ratio
+            y = annotation.y*self.ratio
             w = annotation.width*self.ratio
             h = annotation.height*self.ratio
 
@@ -138,6 +142,9 @@ class CanvasImage(tk.Canvas):
                 print(f"Clicked {annotation.label} {a_id}")
                 self.selected_annotation_idx = a_id
                 self.is_resizing = False
+                self.move_origin_offset = (
+                    event.x/self.ratio - annotation.x, event.y/self.ratio - annotation.y)
+                print(self.move_origin_offset)
                 return
 
     def update_values(self, *_):
@@ -197,13 +204,13 @@ class CanvasImage(tk.Canvas):
         self.rect_ids = []
         self.text_ids = []
         self.handle_ids = []
-        for annotation in self.annotations:
-            x = annotation.center_x - (annotation.width/2)
-            y = annotation.center_y - (annotation.height/2)
+        for a_id, annotation in enumerate(self.annotations):
+            x = annotation.x
+            y = annotation.y
             self.rect_ids.append(self.create_rectangle(x*self.ratio, y*self.ratio, (x+annotation.width)*self.ratio,
                                                        (y+annotation.height)*self.ratio, outline="blue", width=3))
             self.text_ids.append(self.create_text((x+50)*self.ratio, y*self.ratio,
-                                                  text=annotation.label, fill='red'))
+                                                  text=f"{annotation.label}-{a_id}", fill='red'))
             h_x = (x + annotation.width)*self.ratio
             h_y = (y + annotation.height)*self.ratio
             h_size = HANDLE_SIZE/2
