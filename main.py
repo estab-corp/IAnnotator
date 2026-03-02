@@ -124,13 +124,13 @@ class Window(tk.Tk):
         center.grid_rowconfigure(0, weight=1)
         center.grid_columnconfigure(1, weight=1)
 
-        left_panel = tk.Frame(center, bg='blue', width=200, height=190)
+        self.left_panel = tk.Frame(center, bg='blue', width=200, height=190)
         center_widget = tk.Frame(center, bg='yellow', width=250,
                                  height=190, padx=3, pady=3)
         right_panel = tk.Frame(center, bg='green', width=100,
                                height=190, padx=3, pady=3)
 
-        left_panel.grid(row=0, column=0, sticky="ns")
+        self.left_panel.grid(row=0, column=0, sticky="ns")
         center_widget.grid(row=0, column=1, sticky="nsew")
         right_panel.grid(row=0, column=2, sticky="ns")
 
@@ -138,6 +138,13 @@ class Window(tk.Tk):
         tk.Button(center_widget, text='Open',
                   comman=self.canvas.open_image).pack()
         self.canvas.pack(expand=True, fill='both', padx=10, pady=10)
+        self._setup_left_panel()
+
+    def _setup_left_panel(self):
+        listbox = tk.Listbox(self.left_panel)
+        listbox.pack()
+        for i, img in enumerate(self.project.images):
+            listbox.insert(i, img.filename)
 
 
 if __name__ == '__main__':
@@ -146,6 +153,6 @@ if __name__ == '__main__':
     with open(json_file) as f:
         data = json.load(f)
         project = Project(data)
-        project.print()
+        # project.print()
         window = Window(project)
         window.mainloop()
