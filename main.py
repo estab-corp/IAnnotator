@@ -57,11 +57,13 @@ class Project:
 class CanvasImage(tk.Canvas):
     def __init__(self, master: tk.Tk, **kwargs):
         super().__init__(master, **kwargs)
-
+        self.ratio = 1
         self.source_image = None
         self.image_id = None
         self.image = None
 
+        self.annotations: List[Project.Image.Annotation] = []
+        self.rect_ids = []
         self.width, self.height = 0, 0
         self.center_x, self.center_y = 0, 0
         self.bind('<Configure>', self.update_values)
@@ -77,6 +79,7 @@ class CanvasImage(tk.Canvas):
         self.delete_previous_image()
         self.resize_image()
         self.paste_image()
+        self.draw_annotations()
 
     def delete_previous_image(self):
         if self.image is None:
@@ -99,20 +102,25 @@ class CanvasImage(tk.Canvas):
         self.image_id = self.create_image(
             self.center_x, self.center_y, image=self.image)
 
-    def open_image(self, filename: str):
+    def open_image(self, filename: str, annotations: List[Project.Image.Annotation]):
         self.delete_previous_image()
         self.source_image = PIL.Image.open(filename)
         self.image = ImageTk.PhotoImage(self.source_image)
-
+        self.annotations = annotations
         self.resize_image()
         self.paste_image()
+        self.draw_annotations()
 
-    def add_annotations(self, annotations: List[Project.Image.Annotation]):
-        for annotation in annotations:
+    def draw_annotations(self):
+        for r_id in self.rect_ids:
+            self.delete(r_id)
+        self.rect_ids = []
+        for annotation in self.annotations:
             x = annotation.center_x - (annotation.width/2)
             y = annotation.center_y - (annotation.height/2)
-            self.create_rectangle(x*self.ratio, y*self.ratio, (x+annotation.width)*self.ratio,
-                                  (y+annotation.height)*self.ratio, outline="blue", width=3)
+            self.rect_ids.append(self.create_rectangle(x*self.ratio, y*self.ratio, (x+annotation.width)*self.ratio,
+                                                       (y+annotation.height)*self.ratio, outline="blue", width=3))
+            self.create_text()
 
 
 class Window(tk.Tk):
@@ -156,8 +164,8 @@ class Window(tk.Tk):
         sel_index = self.listbox.curselection()[0]
         img_path = self.project.get_image_path(sel_index)
         print(f"selected index = {sel_index} path='{img_path}'")
-        self.canvas.open_image(img_path)
-        self.canvas.add_annotations(self.project.images[sel_index].annotations)
+        self.canvas.open_image(
+            img_path, self.project.images[sel_index].annotations)
 
 
 if __name__ == '__main__':
