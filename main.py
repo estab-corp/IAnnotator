@@ -17,14 +17,14 @@ class Project:
         class Annotation:
             def __init__(self, data: dict):
                 self.label: str = data["label"]
-                self.x = data["coordinates"]["x"]
-                self.y = data["coordinates"]["y"]
+                self.center_x = data["coordinates"]["x"]
+                self.center_y = data["coordinates"]["y"]
                 self.width = data["coordinates"]["width"]
                 self.height = data["coordinates"]["height"]
 
             def print(self):
                 print(
-                    f"\tlabel={self.label} x={self.x} y={self.y} w={self.width} h={self.height}")
+                    f"\tlabel={self.label} x={self.center_x} y={self.center_y} w={self.width} h={self.height}")
 
         def __init__(self, data: dict):
             self.annotations: List[Project.Image.Annotation] = []
@@ -88,10 +88,10 @@ class CanvasImage(tk.Canvas):
         image_width, image_height = self.source_image.size
         width_ratio = self.width / image_width
         height_ratio = self.height / image_height
-        ratio = min(width_ratio, height_ratio)
+        self.ratio = min(width_ratio, height_ratio)
 
-        new_width = int(image_width * ratio)
-        new_height = int(image_height * ratio)
+        new_width = int(image_width * self.ratio)
+        new_height = int(image_height * self.ratio)
         scaled_image = self.source_image.resize((new_width, new_height))
         self.image = ImageTk.PhotoImage(scaled_image)
 
@@ -100,14 +100,19 @@ class CanvasImage(tk.Canvas):
             self.center_x, self.center_y, image=self.image)
 
     def open_image(self, filename: str):
-        #        if not (filename := askopenfilename()):
-        #            return
         self.delete_previous_image()
         self.source_image = PIL.Image.open(filename)
         self.image = ImageTk.PhotoImage(self.source_image)
 
         self.resize_image()
         self.paste_image()
+
+    def add_annotations(self, annotations: List[Project.Image.Annotation]):
+        for annotation in annotations:
+            x = annotation.center_x - (annotation.width/2)
+            y = annotation.center_y - (annotation.height/2)
+            self.create_rectangle(x*self.ratio, y*self.ratio, (x+annotation.width)*self.ratio,
+                                  (y+annotation.height)*self.ratio, outline="blue", width=3)
 
 
 class Window(tk.Tk):
@@ -152,6 +157,7 @@ class Window(tk.Tk):
         img_path = self.project.get_image_path(sel_index)
         print(f"selected index = {sel_index} path='{img_path}'")
         self.canvas.open_image(img_path)
+        self.canvas.add_annotations(self.project.images[sel_index].annotations)
 
 
 if __name__ == '__main__':
