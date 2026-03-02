@@ -5,6 +5,7 @@ from tkinter.filedialog import askopenfilename
 import json
 import argparse
 from typing import List
+import os
 
 
 parser = argparse.ArgumentParser(prog='IAnnotator')
@@ -36,13 +37,17 @@ class Project:
             for annotation in self.annotations:
                 annotation.print()
 
-    def __init__(self, data: dict):
+    def __init__(self, data: dict, folder: str):
+        self.folder = folder
         self.images: List[Project.Image] = []
         self._load(data)
 
     def _load(self, data: dict):
         for entry in data:
             self.images.append(Project.Image(entry))
+
+    def get_image_path(self, index: int):
+        return self.folder + "/" + self.images[index].filename
 
     def print(self):
         for img in self.images:
@@ -61,7 +66,7 @@ class CanvasImage(tk.Canvas):
         self.center_x, self.center_y = 0, 0
         self.bind('<Configure>', self.update_values)
 
-    def update_values(self, *_) -> None:
+    def update_values(self, *_):
         self.width = self.winfo_width()
         self.height = self.winfo_height()
         self.center_x = self.width//2
@@ -73,13 +78,13 @@ class CanvasImage(tk.Canvas):
         self.resize_image()
         self.paste_image()
 
-    def delete_previous_image(self) -> None:
+    def delete_previous_image(self):
         if self.image is None:
             return
         self.delete(self.image_id)
         self.image = self.image_id = None
 
-    def resize_image(self) -> None:
+    def resize_image(self):
         image_width, image_height = self.source_image.size
         width_ratio = self.width / image_width
         height_ratio = self.height / image_height
@@ -90,14 +95,13 @@ class CanvasImage(tk.Canvas):
         scaled_image = self.source_image.resize((new_width, new_height))
         self.image = ImageTk.PhotoImage(scaled_image)
 
-    def paste_image(self) -> None:
+    def paste_image(self):
         self.image_id = self.create_image(
             self.center_x, self.center_y, image=self.image)
 
-    def open_image(self) -> None:
-        if not (filename := askopenfilename()):
-            return
-
+    def open_image(self, filename: str):
+        #        if not (filename := askopenfilename()):
+        #            return
         self.delete_previous_image()
         self.source_image = PIL.Image.open(filename)
         self.image = ImageTk.PhotoImage(self.source_image)
@@ -141,10 +145,17 @@ class Window(tk.Tk):
         self._setup_left_panel()
 
     def _setup_left_panel(self):
-        listbox = tk.Listbox(self.left_panel)
-        listbox.pack()
+        self.listbox = tk.Listbox(self.left_panel, selectmode=tk.SINGLE)
+        self.listbox.bind("<<ListboxSelect>>", self.img_selection_changed)
+        self.listbox.pack(expand=True, fill='y')
         for i, img in enumerate(self.project.images):
-            listbox.insert(i, img.filename)
+            self.listbox.insert(i, img.filename)
+
+    def img_selection_changed(self, event):
+        sel_index = self.listbox.curselection()[0]
+        img_path = self.project.get_image_path(sel_index)
+        print(f"selected index = {sel_index} path='{img_path}'")
+        self.canvas.open_image(img_path)
 
 
 if __name__ == '__main__':
@@ -152,7 +163,8 @@ if __name__ == '__main__':
     json_file = args.jsonfile
     with open(json_file) as f:
         data = json.load(f)
-        project = Project(data)
+        folder = os.path.dirname(json_file)
+        project = Project(data, folder)
         # project.print()
         window = Window(project)
         window.mainloop()
