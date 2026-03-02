@@ -61,12 +61,38 @@ class CanvasImage(tk.Canvas):
         self.source_image = None
         self.image_id = None
         self.image = None
+        self.selected_annotation_idx = -1
 
         self.annotations: List[Project.Image.Annotation] = []
         self.rect_ids = []
+        self.text_ids = []
         self.width, self.height = 0, 0
         self.center_x, self.center_y = 0, 0
         self.bind('<Configure>', self.update_values)
+        self.bind('<Button-1>', self.on_click)
+        self.bind('<B1-Motion>', self.on_move)
+
+    def on_move(self, event):
+        if self.selected_annotation_idx < 0:
+            return
+        annotation = self.annotations[self.selected_annotation_idx]
+        real_x = event.x/self.ratio
+        real_y = event.y/self.ratio
+        annotation.center_x = real_x
+        annotation.center_y = real_y
+        self.draw_annotations()
+
+    def on_click(self, event):
+        self.selected_annotation_idx = -1
+        for a_id, annotation in enumerate(self.annotations):
+            x = (annotation.center_x - (annotation.width/2))*self.ratio
+            y = (annotation.center_y - (annotation.height/2))*self.ratio
+            w = annotation.width*self.ratio
+            h = annotation.height*self.ratio
+            if x <= event.x <= x+w and y <= event.y <= y+h:
+                print(f"Clicked {annotation.label} {a_id}")
+                self.selected_annotation_idx = a_id
+                return
 
     def update_values(self, *_):
         self.width = self.winfo_width()
@@ -103,6 +129,7 @@ class CanvasImage(tk.Canvas):
             self.center_x, self.center_y, image=self.image)
 
     def open_image(self, filename: str, annotations: List[Project.Image.Annotation]):
+        self.selected_annotation_idx = -1
         self.delete_previous_image()
         self.source_image = PIL.Image.open(filename)
         self.image = ImageTk.PhotoImage(self.source_image)
@@ -114,13 +141,17 @@ class CanvasImage(tk.Canvas):
     def draw_annotations(self):
         for r_id in self.rect_ids:
             self.delete(r_id)
+        for t_id in self.text_ids:
+            self.delete(t_id)
         self.rect_ids = []
+        self.text_ids = []
         for annotation in self.annotations:
             x = annotation.center_x - (annotation.width/2)
             y = annotation.center_y - (annotation.height/2)
             self.rect_ids.append(self.create_rectangle(x*self.ratio, y*self.ratio, (x+annotation.width)*self.ratio,
                                                        (y+annotation.height)*self.ratio, outline="blue", width=3))
-            self.create_text()
+            self.text_ids.append(self.create_text((x+50)*self.ratio, y*self.ratio,
+                                                  text=annotation.label, fill='red'))
 
 
 class Window(tk.Tk):
