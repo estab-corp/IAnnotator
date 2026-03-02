@@ -2,6 +2,51 @@ import PIL.Image
 import tkinter as tk
 from PIL import ImageTk
 from tkinter.filedialog import askopenfilename
+import json
+import argparse
+from typing import List
+
+
+parser = argparse.ArgumentParser(prog='IAnnotator')
+parser.add_argument('jsonfile', metavar="JSON file")
+
+
+class Project:
+    class Image:
+        class Annotation:
+            def __init__(self, data: dict):
+                self.label: str = data["label"]
+                self.x = data["coordinates"]["x"]
+                self.y = data["coordinates"]["y"]
+                self.width = data["coordinates"]["width"]
+                self.height = data["coordinates"]["height"]
+
+            def print(self):
+                print(
+                    f"\tlabel={self.label} x={self.x} y={self.y} w={self.width} h={self.height}")
+
+        def __init__(self, data: dict):
+            self.annotations: List[Project.Image.Annotation] = []
+            self.filename: str = data["imagefilename"]
+            for entry in data["annotations"]:
+                self.annotations.append(Project.Image.Annotation(entry))
+
+        def print(self):
+            print(f"filename: {self.filename}")
+            for annotation in self.annotations:
+                annotation.print()
+
+    def __init__(self, data: dict):
+        self.images: List[Project.Image] = []
+        self._load(data)
+
+    def _load(self, data: dict):
+        for entry in data:
+            self.images.append(Project.Image(entry))
+
+    def print(self):
+        for img in self.images:
+            img.print()
 
 
 class CanvasImage(tk.Canvas):
@@ -62,9 +107,9 @@ class CanvasImage(tk.Canvas):
 
 
 class Window(tk.Tk):
-    def __init__(self, **kwargs):
+    def __init__(self, project: Project, **kwargs):
         super().__init__(**kwargs)
-
+        self.project = project
         self.canvas = CanvasImage(self, bd=2)
         tk.Button(self, text='Open',
                   comman=self.canvas.open_image).pack()
@@ -72,5 +117,11 @@ class Window(tk.Tk):
 
 
 if __name__ == '__main__':
-    window = Window()
-    window.mainloop()
+    args = parser.parse_args()
+    json_file = args.jsonfile
+    with open(json_file) as f:
+        data = json.load(f)
+        project = Project(data)
+        project.print()
+#        window = Window(project)
+#        window.mainloop()
