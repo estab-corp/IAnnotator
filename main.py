@@ -23,10 +23,6 @@ class Project:
                 self.x = center_x - self.width/2
                 self.y = center_y - self.height/2
 
-            def print(self):
-                print(
-                    f"\tlabel={self.label} x={self.x} y={self.y} w={self.width} h={self.height}")
-
             def save(self) -> dict:
                 center_x = self.x + self.width/2
                 center_y = self.y + self.height/2
@@ -46,11 +42,6 @@ class Project:
             self.filename: str = data["imagefilename"]
             for entry in data["annotations"]:
                 self.annotations.append(Project.Image.Annotation(entry))
-
-        def print(self):
-            print(f"filename: {self.filename}")
-            for annotation in self.annotations:
-                annotation.print()
 
         def save(self) -> dict:
             annotations = []
@@ -73,10 +64,6 @@ class Project:
 
     def get_image_path(self, index: int):
         return self.folder + "/" + self.images[index].filename
-
-    def print(self):
-        for img in self.images:
-            img.print()
 
     def save(self) -> List:
         ret = []
@@ -134,17 +121,14 @@ class CanvasImage(tk.Canvas):
             h_y = y+h
             h_size = HANDLE_SIZE/2
             if h_x-h_size <= event.x <= h_x+h_size and h_y-h_size <= event.y <= h_y+h_size:
-                print(f"Touching handle {a_id}")
                 self.selected_annotation_idx = a_id
                 self.is_resizing = True
                 return
             if x <= event.x <= x+w and y <= event.y <= y+h:
-                print(f"Clicked {annotation.label} {a_id}")
                 self.selected_annotation_idx = a_id
                 self.is_resizing = False
                 self.move_origin_offset = (
                     event.x/self.ratio - annotation.x, event.y/self.ratio - annotation.y)
-                print(self.move_origin_offset)
                 return
 
     def update_values(self, *_):
@@ -275,7 +259,6 @@ class Window(tk.Tk):
     def img_selection_changed(self, _):
         sel_index = self.listbox.curselection()[0]
         img_path = self.project.get_image_path(sel_index)
-        print(f"selected index = {sel_index} path='{img_path}'")
         self.canvas.open_image(
             img_path, self.project.images[sel_index].annotations)
 
@@ -287,6 +270,5 @@ if __name__ == '__main__':
         data = json.load(f)
         folder = os.path.dirname(json_file)
         project = Project(data, folder)
-        # project.print()
         window = Window(project)
         window.mainloop()
