@@ -14,7 +14,14 @@ parser.add_argument('jsonfile', metavar="JSON file")
 class Project:
     class Image:
         class Annotation:
-            def __init__(self, data: dict):
+            def __init__(self):
+                self.label: str = "LABEL"
+                self.width = 100
+                self.height = 200
+                self.x = 300
+                self.y = 400
+
+            def from_data(self, data: dict):
                 self.label: str = data["label"]
                 center_x = data["coordinates"]["x"]
                 center_y = data["coordinates"]["y"]
@@ -37,11 +44,16 @@ class Project:
                 }
                 return ret
 
-        def __init__(self, data: dict):
+        def __init__(self):
             self.annotations: List[Project.Image.Annotation] = []
+            self.filename: str = ""
+
+        def from_data(self, data: dict):
             self.filename: str = data["imagefilename"]
             for entry in data["annotations"]:
-                self.annotations.append(Project.Image.Annotation(entry))
+                annotation = Project.Image.Annotation()
+                annotation.from_data(entry)
+                self.annotations.append(annotation)
 
         def save(self) -> dict:
             annotations = []
@@ -61,7 +73,9 @@ class Project:
 
     def _load(self, data: dict):
         for entry in data:
-            self.images.append(Project.Image(entry))
+            img = Project.Image()
+            img.from_data(entry)
+            self.images.append(img)
 
     def get_image_path(self, index: int):
         return self.folder + "/" + self.images[index].filename
@@ -232,7 +246,9 @@ class AnnotationsInspector(tk.Frame):
     def __init__(self, master: tk.Tk, **kwargs):
         super().__init__(master, **kwargs)
         self.current_image: Optional[Project.Image] = None
-        tk.Button(self, text="add").grid(row=0, column=0)
+        btton = tk.Button(self, text="add", command=self.add_new)
+
+        btton.grid(row=0, column=0)
         self.listbox = tk.Listbox(
             self, selectmode=tk.SINGLE, exportselection=False)
         self.listbox.grid(row=1, column=1)
@@ -279,6 +295,9 @@ class AnnotationsInspector(tk.Frame):
         self.y_val.set(self.current_image.annotations[index].y)
         self.w_val.set(self.current_image.annotations[index].width)
         self.h_val.set(self.current_image.annotations[index].height)
+
+    def add_new(self):
+        self.current_image.annotations.append(Project.Image.Annotation())
 
 
 class Window(tk.Tk):
