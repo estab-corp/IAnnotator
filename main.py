@@ -81,9 +81,18 @@ class Project:
 HANDLE_SIZE = 10
 
 
+class InspectorInterface:
+    def annotations_selection_changed(self, index):
+        pass
+
+    def annotations_changed(self, index):
+        pass
+
+
 class CanvasImage(tk.Canvas):
-    def __init__(self, master: tk.Tk, **kwargs):
+    def __init__(self, inspector: InspectorInterface, master: tk.Tk, **kwargs):
         super().__init__(master, **kwargs)
+        self.inspector = inspector
         self.ratio = 1
         self.source_image = None
         self.image_id = None
@@ -113,6 +122,8 @@ class CanvasImage(tk.Canvas):
         else:
             annotation.x = real_x - self.move_origin_offset[0]
             annotation.y = real_y - self.move_origin_offset[1]
+
+        self.inspector.annotations_changed(self.selected_annotation_idx)
         self.draw_annotations()
 
     def on_click(self, event):
@@ -129,10 +140,14 @@ class CanvasImage(tk.Canvas):
             if h_x-h_size <= event.x <= h_x+h_size and h_y-h_size <= event.y <= h_y+h_size:
                 self.selected_annotation_idx = a_id
                 self.is_resizing = True
+                self.draw_annotations()
+                self.inspector.annotations_selection_changed(a_id)
                 return
             if x <= event.x <= x+w and y <= event.y <= y+h:
                 self.selected_annotation_idx = a_id
                 self.is_resizing = False
+                self.draw_annotations()
+                self.inspector.annotations_selection_changed(a_id)
                 self.move_origin_offset = (
                     event.x/self.ratio - annotation.x, event.y/self.ratio - annotation.y)
                 return
@@ -178,6 +193,8 @@ class CanvasImage(tk.Canvas):
         self.source_image = PIL.Image.open(filename)
         self.image = ImageTk.PhotoImage(self.source_image)
         self.annotations = annotations
+        if len(self.annotations) > 0:
+            self.selected_annotation_idx = 0
         self.resize_image()
         self.paste_image()
         self.draw_annotations()
@@ -197,8 +214,11 @@ class CanvasImage(tk.Canvas):
         for a_id, annotation in enumerate(self.annotations):
             x = annotation.x
             y = annotation.y
+            color = "lightblue"
+            if a_id == self.selected_annotation_idx:
+                color = "blue"
             self.rect_ids.append(self.create_rectangle(x*self.ratio, y*self.ratio, (x+annotation.width)*self.ratio,
-                                                       (y+annotation.height)*self.ratio, outline="blue", width=3))
+                                                       (y+annotation.height)*self.ratio, outline=color, width=3))
             self.text_ids.append(self.create_text((x+50)*self.ratio, y*self.ratio,
                                                   text=f"{annotation.label}-{a_id}", fill='red'))
             h_x = (x + annotation.width)*self.ratio
@@ -243,12 +263,16 @@ class AnnotationsInspector(tk.Frame):
         self.listbox.delete(0, tk.END)
         for i, anno in enumerate(image.annotations):
             self.listbox.insert(i, f"{anno.label}-{i}")
-        self.listbox.select_set(0)
-        self.update_annotation(0)
+        self.do_select_annotation(0)
 
     def selection_changed(self, _=None):
         sel_index = self.listbox.curselection()[0]
         self.update_annotation(sel_index)
+
+    def do_select_annotation(self, index: int):
+        self.listbox.select_clear(0, tk.END)
+        self.listbox.select_set(index)
+        self.update_annotation(index)
 
     def update_annotation(self, index: int):
         self.x_val.set(self.current_image.annotations[index].x)
@@ -300,7 +324,7 @@ class Window(tk.Tk):
         center_widget.grid(row=0, column=1, sticky="nsew")
         self.right_panel.grid(row=0, column=2, sticky="ns")
 
-        self.canvas = CanvasImage(center_widget, bd=2)
+        self.canvas = CanvasImage(self, center_widget, bd=2)
         self.canvas.pack(expand=True, fill='both', padx=10, pady=10)
         self.listbox = tk.Listbox(
             self.left_panel, selectmode=tk.SINGLE, exportselection=False)
@@ -315,6 +339,12 @@ class Window(tk.Tk):
         self.canvas.open_image(
             img_path, self.project.images[sel_index].annotations)
         self.right_panel.update_inspector(self.project.images[sel_index])
+
+    def annotations_selection_changed(self, index):
+        self.right_panel.do_select_annotation(index)
+
+    def annotations_changed(self, index):
+        self.right_panel.update_annotation(index)
 
 
 if __name__ == '__main__':
