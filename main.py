@@ -26,6 +26,18 @@ class Project:
                 print(
                     f"\tlabel={self.label} x={self.center_x} y={self.center_y} w={self.width} h={self.height}")
 
+            def save(self) -> dict:
+                ret = {
+                    "label": self.label,
+                    "coordinates": {
+                        "x": self.center_x,
+                        "y": self.center_y,
+                        "width": self.width,
+                        "height": self.height,
+                    }
+                }
+                return ret
+
         def __init__(self, data: dict):
             self.annotations: List[Project.Image.Annotation] = []
             self.filename: str = data["imagefilename"]
@@ -36,6 +48,16 @@ class Project:
             print(f"filename: {self.filename}")
             for annotation in self.annotations:
                 annotation.print()
+
+        def save(self) -> dict:
+            annotations = []
+            for annotation in self.annotations:
+                annotations.append(annotation.save())
+            ret = {
+                "imagefilename": self.filename,
+                "annotations": annotations
+            }
+            return ret
 
     def __init__(self, data: dict, folder: str):
         self.folder = folder
@@ -52,6 +74,12 @@ class Project:
     def print(self):
         for img in self.images:
             img.print()
+
+    def save(self) -> List:
+        ret = []
+        for img in self.images:
+            ret.append(img.save())
+        return ret
 
 
 class CanvasImage(tk.Canvas):
@@ -160,6 +188,23 @@ class Window(tk.Tk):
         self.project = project
         self.title(f"Model Annotator file {self.project.folder}")
         self._setup_ui()
+        self._setup_menu_bar()
+
+    def _setup_menu_bar(self):
+        menu_bar = tk.Menu(self)
+
+        menu_file = tk.Menu(menu_bar, tearoff=0)
+        menu_file.add_command(
+            label="Save", command=self.save, accelerator="Command+s")
+        self.bind_all("<Command-s>", self.save)
+        menu_bar.add_cascade(label="File", menu=menu_file)
+        self.config(menu=menu_bar)
+
+    def save(self, _=None):
+        print("save project")
+        data = self.project.save()
+        with open("out.json", "w") as f:
+            json.dump(data, f)
 
     def _setup_ui(self):
         self.geometry(
