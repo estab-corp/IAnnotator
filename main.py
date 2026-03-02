@@ -1,7 +1,6 @@
 import PIL.Image
 import tkinter as tk
 from PIL import ImageTk
-from tkinter.filedialog import askopenfilename
 import json
 import argparse
 from typing import List
@@ -82,6 +81,9 @@ class Project:
         return ret
 
 
+HANDLE_SIZE = 10
+
+
 class CanvasImage(tk.Canvas):
     def __init__(self, master: tk.Tk, **kwargs):
         super().__init__(master, **kwargs)
@@ -91,9 +93,11 @@ class CanvasImage(tk.Canvas):
         self.image = None
         self.selected_annotation_idx = -1
 
+        self.is_resizing = False
         self.annotations: List[Project.Image.Annotation] = []
         self.rect_ids = []
         self.text_ids = []
+        self.handle_ids = []
         self.width, self.height = 0, 0
         self.center_x, self.center_y = 0, 0
         self.bind('<Configure>', self.update_values)
@@ -106,8 +110,12 @@ class CanvasImage(tk.Canvas):
         annotation = self.annotations[self.selected_annotation_idx]
         real_x = event.x/self.ratio
         real_y = event.y/self.ratio
-        annotation.center_x = real_x
-        annotation.center_y = real_y
+        if self.is_resizing:
+            annotation.width = real_x-annotation.center_x
+            annotation.height = real_y-annotation.center_y
+        else:
+            annotation.center_x = real_x
+            annotation.center_y = real_y
         self.draw_annotations()
 
     def on_click(self, event):
@@ -117,9 +125,19 @@ class CanvasImage(tk.Canvas):
             y = (annotation.center_y - (annotation.height/2))*self.ratio
             w = annotation.width*self.ratio
             h = annotation.height*self.ratio
+
+            h_x = x+w
+            h_y = y+h
+            h_size = HANDLE_SIZE/2
+            if h_x-h_size <= event.x <= h_x+h_size and h_y-h_size <= event.y <= h_y+h_size:
+                print(f"Touching handle {a_id}")
+                self.selected_annotation_idx = a_id
+                self.is_resizing = True
+                return
             if x <= event.x <= x+w and y <= event.y <= y+h:
                 print(f"Clicked {annotation.label} {a_id}")
                 self.selected_annotation_idx = a_id
+                self.is_resizing = False
                 return
 
     def update_values(self, *_):
@@ -158,6 +176,7 @@ class CanvasImage(tk.Canvas):
 
     def open_image(self, filename: str, annotations: List[Project.Image.Annotation]):
         self.selected_annotation_idx = -1
+        self.is_resizing = False
         self.delete_previous_image()
         self.source_image = PIL.Image.open(filename)
         self.image = ImageTk.PhotoImage(self.source_image)
@@ -171,8 +190,13 @@ class CanvasImage(tk.Canvas):
             self.delete(r_id)
         for t_id in self.text_ids:
             self.delete(t_id)
+
+        for h_id in self.handle_ids:
+            self.delete(h_id)
+
         self.rect_ids = []
         self.text_ids = []
+        self.handle_ids = []
         for annotation in self.annotations:
             x = annotation.center_x - (annotation.width/2)
             y = annotation.center_y - (annotation.height/2)
@@ -180,6 +204,11 @@ class CanvasImage(tk.Canvas):
                                                        (y+annotation.height)*self.ratio, outline="blue", width=3))
             self.text_ids.append(self.create_text((x+50)*self.ratio, y*self.ratio,
                                                   text=annotation.label, fill='red'))
+            h_x = (x + annotation.width)*self.ratio
+            h_y = (y + annotation.height)*self.ratio
+            h_size = HANDLE_SIZE/2
+            self.handle_ids.append(self.create_rectangle(
+                h_x-h_size, h_y-h_size, h_x+h_size, h_y+h_size, fill="red"))
 
 
 class Window(tk.Tk):
