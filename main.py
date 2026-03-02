@@ -53,7 +53,8 @@ class Project:
             }
             return ret
 
-    def __init__(self, data: dict, folder: str):
+    def __init__(self, data: dict, folder: str, json_file: str):
+        self.json_file = json_file
         self.folder = folder
         self.images: List[Project.Image] = []
         self._load(data)
@@ -70,6 +71,11 @@ class Project:
         for img in self.images:
             ret.append(img.save())
         return ret
+
+    def save_file(self):
+        data = self.save()
+        with open(self.json_file, "w", encoding="utf-8") as f:
+            json.dump(data, f)
 
 
 HANDLE_SIZE = 10
@@ -221,10 +227,7 @@ class Window(tk.Tk):
         self.config(menu=menu_bar)
 
     def save(self, _=None):
-        print("save project")
-        data = self.project.save()
-        with open("out.json", "w") as f:
-            json.dump(data, f)
+        self.project.save_file()
 
     def _setup_ui(self):
         self.geometry(
@@ -266,9 +269,9 @@ class Window(tk.Tk):
 if __name__ == '__main__':
     args = parser.parse_args()
     json_file = args.jsonfile
-    with open(json_file) as f:
+    with open(json_file, encoding="utf-8") as f:
         data = json.load(f)
         folder = os.path.dirname(json_file)
-        project = Project(data, folder)
+        project = Project(data, folder, json_file)
         window = Window(project)
         window.mainloop()
