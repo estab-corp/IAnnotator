@@ -114,6 +114,7 @@ class Window(tk.Tk):
     def __init__(self, project: Project, **kwargs):
         super().__init__(**kwargs)
         self.project = project
+        self.title(f"Model Annotator file {self.project.folder}")
         self._setup_ui()
 
     def _setup_ui(self):
@@ -139,19 +140,14 @@ class Window(tk.Tk):
         right_panel.grid(row=0, column=2, sticky="ns")
 
         self.canvas = CanvasImage(center_widget, bd=2)
-        tk.Button(center_widget, text='Open',
-                  comman=self.canvas.open_image).pack()
         self.canvas.pack(expand=True, fill='both', padx=10, pady=10)
-        self._setup_left_panel()
-
-    def _setup_left_panel(self):
         self.listbox = tk.Listbox(self.left_panel, selectmode=tk.SINGLE)
         self.listbox.bind("<<ListboxSelect>>", self.img_selection_changed)
         self.listbox.pack(expand=True, fill='y')
         for i, img in enumerate(self.project.images):
             self.listbox.insert(i, img.filename)
 
-    def img_selection_changed(self, event):
+    def img_selection_changed(self, _):
         sel_index = self.listbox.curselection()[0]
         img_path = self.project.get_image_path(sel_index)
         print(f"selected index = {sel_index} path='{img_path}'")
