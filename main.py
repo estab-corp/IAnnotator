@@ -3,7 +3,7 @@ import tkinter as tk
 from PIL import ImageTk
 import json
 import argparse
-from typing import List
+from typing import List, Optional
 import os
 
 
@@ -208,6 +208,55 @@ class CanvasImage(tk.Canvas):
                 h_x-h_size, h_y-h_size, h_x+h_size, h_y+h_size, fill="red"))
 
 
+class AnnotationsInspector(tk.Frame):
+    def __init__(self, master: tk.Tk, **kwargs):
+        super().__init__(master, **kwargs)
+        self.current_image: Optional[Project.Image] = None
+        tk.Button(self, text="add").grid(row=0, column=0)
+        self.listbox = tk.Listbox(
+            self, selectmode=tk.SINGLE, exportselection=False)
+        self.listbox.grid(row=1, column=1)
+        self.listbox.bind("<<ListboxSelect>>", self.selection_changed)
+
+        tk.Label(self, text="x: ").grid(row=2, column=0)
+        self.x_val = tk.IntVar(value=0)
+        tk.Spinbox(self, textvariable=self.x_val, from_=0, to=2000,
+                   increment=1).grid(row=2, column=1)
+
+        tk.Label(self, text="y: ").grid(row=3, column=0)
+        self.y_val = tk.IntVar(value=0)
+        tk.Spinbox(self, textvariable=self.y_val, from_=0, to=2000,
+                   increment=1).grid(row=3, column=1)
+
+        tk.Label(self, text="w: ").grid(row=4, column=0)
+        self.w_val = tk.IntVar(value=0)
+        tk.Spinbox(self, textvariable=self.w_val, from_=0, to=2000,
+                   increment=1).grid(row=4, column=1)
+
+        tk.Label(self, text="h: ").grid(row=5, column=0)
+        self.h_val = tk.IntVar(value=0)
+        tk.Spinbox(self, textvariable=self.h_val, from_=0, to=2000,
+                   increment=1).grid(row=5, column=1)
+
+    def update_inspector(self, image: Project.Image):
+        self.current_image = image
+        self.listbox.delete(0, tk.END)
+        for i, anno in enumerate(image.annotations):
+            self.listbox.insert(i, f"{anno.label}-{i}")
+        self.listbox.select_set(0)
+        self.update_annotation(0)
+
+    def selection_changed(self, _=None):
+        sel_index = self.listbox.curselection()[0]
+        self.update_annotation(sel_index)
+
+    def update_annotation(self, index: int):
+        self.x_val.set(self.current_image.annotations[index].x)
+        self.y_val.set(self.current_image.annotations[index].y)
+        self.w_val.set(self.current_image.annotations[index].width)
+        self.h_val.set(self.current_image.annotations[index].height)
+
+
 class Window(tk.Tk):
     def __init__(self, project: Project, **kwargs):
         super().__init__(**kwargs)
@@ -244,16 +293,17 @@ class Window(tk.Tk):
         self.left_panel = tk.Frame(center, bg='blue', width=200, height=190)
         center_widget = tk.Frame(center, bg='yellow', width=250,
                                  height=190, padx=3, pady=3)
-        right_panel = tk.Frame(center, bg='green', width=100,
-                               height=190, padx=3, pady=3)
+        self.right_panel = AnnotationsInspector(center, bg='green', width=100,
+                                                height=190, padx=3, pady=3)
 
         self.left_panel.grid(row=0, column=0, sticky="ns")
         center_widget.grid(row=0, column=1, sticky="nsew")
-        right_panel.grid(row=0, column=2, sticky="ns")
+        self.right_panel.grid(row=0, column=2, sticky="ns")
 
         self.canvas = CanvasImage(center_widget, bd=2)
         self.canvas.pack(expand=True, fill='both', padx=10, pady=10)
-        self.listbox = tk.Listbox(self.left_panel, selectmode=tk.SINGLE)
+        self.listbox = tk.Listbox(
+            self.left_panel, selectmode=tk.SINGLE, exportselection=False)
         self.listbox.bind("<<ListboxSelect>>", self.img_selection_changed)
         self.listbox.pack(expand=True, fill='y')
         for i, img in enumerate(self.project.images):
@@ -264,6 +314,7 @@ class Window(tk.Tk):
         img_path = self.project.get_image_path(sel_index)
         self.canvas.open_image(
             img_path, self.project.images[sel_index].annotations)
+        self.right_panel.update_inspector(self.project.images[sel_index])
 
 
 if __name__ == '__main__':
