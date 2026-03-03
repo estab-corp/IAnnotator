@@ -8,8 +8,8 @@ from formats import export_to
 
 parser = argparse.ArgumentParser(prog='IAnnotator')
 parser.add_argument('jsonfile', metavar="JSON file")
-parser.add_argument('--gen-coco', action='store_true',
-                    help="generate a coco json")
+parser.add_argument(
+    '--gen-coco', help="generate a coco json")
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -20,9 +20,9 @@ if __name__ == '__main__':
         project = Project(data, folder, json_file)
 
         if args.gen_coco:
-            print("Generate coco")
             data = export_to("coco", project)
-            print(data)
+            with open(args.gen_coco, "w", encoding="utf-8") as f:
+                json.dump(data, f)
         else:
             window = Window(project)
             window.mainloop()
