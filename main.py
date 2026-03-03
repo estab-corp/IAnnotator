@@ -3,9 +3,13 @@ import argparse
 import os
 from ui import Window
 from project import Project
+from formats import export_to
+
 
 parser = argparse.ArgumentParser(prog='IAnnotator')
 parser.add_argument('jsonfile', metavar="JSON file")
+parser.add_argument('--gen-coco', action='store_true',
+                    help="generate a coco json")
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -14,5 +18,11 @@ if __name__ == '__main__':
         data = json.load(f)
         folder = os.path.dirname(json_file)
         project = Project(data, folder, json_file)
-        window = Window(project)
-        window.mainloop()
+
+        if args.gen_coco:
+            print("Generate coco")
+            data = export_to("coco", project)
+            print(data)
+        else:
+            window = Window(project)
+            window.mainloop()
