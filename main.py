@@ -246,6 +246,7 @@ class AnnotationsInspector(tk.Frame):
     def __init__(self, master: tk.Tk, **kwargs):
         super().__init__(master, **kwargs)
         self.current_image: Optional[Project.Image] = None
+        self.current_annotation_index = -1
         btton = tk.Button(self, text="add", command=self.add_new)
 
         btton.grid(row=0, column=0)
@@ -274,11 +275,25 @@ class AnnotationsInspector(tk.Frame):
         tk.Spinbox(self, textvariable=self.h_val, from_=0, to=2000,
                    increment=1).grid(row=5, column=1)
 
+        tk.Label(self, text="label: ").grid(row=6, column=0)
+        self.lbl_val = tk.StringVar(value="Label")
+        self.label_entry = tk.Entry(self, textvariable=self.lbl_val, )
+        self.label_entry.grid(row=6, column=1)
+        self.label_entry.bind("<Return>", self.update_label)
+
+    def update_label(self, _=None):
+        self.current_image.annotations[self.current_annotation_index].label = self.lbl_val.get(
+        )
+        self.update_annotation_list()
+
+    def update_annotation_list(self):
+        self.listbox.delete(0, tk.END)
+        for i, anno in enumerate(self.current_image.annotations):
+            self.listbox.insert(i, f"{anno.label}-{i}")
+
     def update_inspector(self, image: Project.Image):
         self.current_image = image
-        self.listbox.delete(0, tk.END)
-        for i, anno in enumerate(image.annotations):
-            self.listbox.insert(i, f"{anno.label}-{i}")
+        self.update_annotation_list()
         self.do_select_annotation(0)
 
     def selection_changed(self, _=None):
@@ -287,6 +302,7 @@ class AnnotationsInspector(tk.Frame):
 
     def do_select_annotation(self, index: int):
         self.listbox.select_clear(0, tk.END)
+        self.current_annotation_index = index
         self.listbox.select_set(index)
         self.update_annotation(index)
 
@@ -295,6 +311,7 @@ class AnnotationsInspector(tk.Frame):
         self.y_val.set(self.current_image.annotations[index].y)
         self.w_val.set(self.current_image.annotations[index].width)
         self.h_val.set(self.current_image.annotations[index].height)
+        self.lbl_val.set(self.current_image.annotations[index].label)
 
     def add_new(self):
         self.current_image.annotations.append(Project.Image.Annotation())
