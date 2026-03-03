@@ -243,8 +243,9 @@ class CanvasImage(tk.Canvas):
 
 
 class AnnotationsInspector(tk.Frame):
-    def __init__(self, master: tk.Tk, **kwargs):
+    def __init__(self, inspector: InspectorInterface, master: tk.Tk, **kwargs):
         super().__init__(master, **kwargs)
+        self.inspector = inspector
         self.current_image: Optional[Project.Image] = None
         self.current_annotation_index = -1
         btton = tk.Button(self, text="add", command=self.add_new)
@@ -281,6 +282,18 @@ class AnnotationsInspector(tk.Frame):
         self.label_entry.grid(row=6, column=1)
         self.label_entry.bind("<Return>", self.update_label)
 
+        del_btton = tk.Button(self, text="remove", command=self.remove_anno)
+        del_btton.grid(row=7, column=1)
+
+    def remove_anno(self, _=None):
+        print(f"remove annotation {self.current_annotation_index}")
+        del self.current_image.annotations[self.current_annotation_index]
+        if self.current_annotation_index >= 1:
+            self.current_annotation_index -= 1
+        if len(self.current_image.annotations) == 0:
+            self.current_annotation_index = -1
+        self.update_inspector(self.current_image)
+
     def update_label(self, _=None):
         self.current_image.annotations[self.current_annotation_index].label = self.lbl_val.get(
         )
@@ -294,7 +307,8 @@ class AnnotationsInspector(tk.Frame):
     def update_inspector(self, image: Project.Image):
         self.current_image = image
         self.update_annotation_list()
-        self.do_select_annotation(0)
+        if len(self.current_image.annotations) > 0:
+            self.do_select_annotation(0)
 
     def selection_changed(self, _=None):
         sel_index = self.listbox.curselection()[0]
@@ -315,6 +329,9 @@ class AnnotationsInspector(tk.Frame):
 
     def add_new(self):
         self.current_image.annotations.append(Project.Image.Annotation())
+        self.update_annotation_list()
+        self.inspector.annotations_changed(
+            len(self.current_image.annotations)-1)
 
 
 class Window(tk.Tk):
@@ -353,7 +370,7 @@ class Window(tk.Tk):
         self.left_panel = tk.Frame(center, bg='blue', width=200, height=190)
         center_widget = tk.Frame(center, bg='yellow', width=250,
                                  height=190, padx=3, pady=3)
-        self.right_panel = AnnotationsInspector(center, bg='green', width=100,
+        self.right_panel = AnnotationsInspector(self, center, bg='green', width=100,
                                                 height=190, padx=3, pady=3)
 
         self.left_panel.grid(row=0, column=0, sticky="ns")
