@@ -5,6 +5,12 @@ from typing import List, Dict, Optional
 
 class CocoHandler(AbstractFormatHandler):
     def read(self, data: any) -> Optional[Model]:
+        if "images" not in data:
+            raise ValueError("coco: missing 'images' entry")
+        if "categories" not in data:
+            raise ValueError("coco: missing 'categories' entry")
+        if "annotations" not in data:
+            raise ValueError("coco: missing 'categories' entry")
         model = Model()
         img_ids: Dict[int, Model.Image] = {}
         for img_data in data["images"]:

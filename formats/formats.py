@@ -22,6 +22,8 @@ def export_to(name: str, model: Model) -> dict:
 
 
 def import_from(name: str, data: any) -> Optional[Model]:
+    if name not in _formats:
+        raise ValueError(f"unknown format '{name}'")
     return _formats[name].read(data)
 
 

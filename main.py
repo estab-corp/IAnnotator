@@ -8,7 +8,7 @@ import formats
 
 
 parser = argparse.ArgumentParser(prog='IAnnotator')
-parser.add_argument('--in-format', help="json format input")
+parser.add_argument('--in-format', help="json format input", default="coreml")
 parser.add_argument('jsonfile', metavar="JSON file input file", nargs='?')
 parser.add_argument(
     '--gen-coco', help="generate a coco json")
@@ -29,8 +29,8 @@ if __name__ == '__main__':
     json_file = args.jsonfile
     with open(json_file, encoding="utf-8") as f:
         data = json.load(f)
-
-        model = formats.import_from("coreml", data)
+        print(f"load document using format={args.in_format}")
+        model = formats.import_from(args.in_format, data)
         if model is None:
             sys.exit(1)
         folder = os.path.dirname(json_file)
