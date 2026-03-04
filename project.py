@@ -12,15 +12,6 @@ class Project:
                 self.x = 300
                 self.y = 400
 
-            def from_data(self, data: dict):
-                self.label: str = data["label"]
-                center_x = data["coordinates"]["x"]
-                center_y = data["coordinates"]["y"]
-                self.width = data["coordinates"]["width"]
-                self.height = data["coordinates"]["height"]
-                self.x = center_x - self.width/2
-                self.y = center_y - self.height/2
-
             def save(self) -> dict:
                 center_x = self.x + self.width/2
                 center_y = self.y + self.height/2
@@ -39,13 +30,6 @@ class Project:
             self.annotations: List[Project.Image.Annotation] = []
             self.filename: str = ""
 
-        def from_data(self, data: dict):
-            self.filename: str = data["imagefilename"]
-            for entry in data["annotations"]:
-                annotation = Project.Image.Annotation()
-                annotation.from_data(entry)
-                self.annotations.append(annotation)
-
         def save(self) -> dict:
             annotations = []
             for annotation in self.annotations:
@@ -60,12 +44,6 @@ class Project:
         self.json_file: str = ""
         self.folder: str = ""
         self.images: List[Project.Image] = []
-
-    def _load(self, data: dict):
-        for entry in data:
-            img = Project.Image()
-            img.from_data(entry)
-            self.images.append(img)
 
     def get_image_path(self, index: int):
         return self.folder + "/" + self.images[index].filename
