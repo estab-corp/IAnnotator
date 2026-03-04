@@ -288,17 +288,14 @@ class Window(tk.Tk):
         center.grid_columnconfigure(1, weight=1)
 
         self.left_panel = tk.Frame(center, bg='blue', width=200, height=190)
-        center_widget = tk.Frame(center, bg='yellow', width=250,
-                                 height=190, padx=3, pady=3)
         self.right_panel = AnnotationsInspector(self, center, bg='green', width=100,
                                                 height=190, padx=3, pady=3)
 
         self.left_panel.grid(row=0, column=0, sticky="ns")
-        center_widget.grid(row=0, column=1, sticky="nsew")
         self.right_panel.grid(row=0, column=2, sticky="ns")
 
-        self.canvas = CanvasImage(self, center_widget, bd=2)
-        self.canvas.pack(expand=True, fill='both', padx=10, pady=10)
+        self.canvas = CanvasImage(self, center, bd=2)
+        self.canvas.grid(row=0, column=1, sticky="nsew")
         self.listbox = tk.Listbox(
             self.left_panel, selectmode=tk.SINGLE, exportselection=False)
         self.listbox.bind("<<ListboxSelect>>", self.img_selection_changed)
