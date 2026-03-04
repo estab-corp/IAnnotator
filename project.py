@@ -1,11 +1,11 @@
 import json
-from typing import List
 from model import Model
 from formats import export_to
 
 
 class Project:
     def __init__(self, model: Model):
+        self.default_format = "coreml"
         self.json_file: str = ""
         self.folder: str = ""
         self.model = model
@@ -14,6 +14,6 @@ class Project:
         return self.folder + "/" + self.model.images[index].filename
 
     def save_file(self):
-        data = export_to("coreml", self.model)
+        data = export_to(self.default_format, self.model)
         with open(self.json_file, "w", encoding="utf-8") as f:
             json.dump(data, f)
