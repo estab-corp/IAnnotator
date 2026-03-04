@@ -56,11 +56,10 @@ class Project:
             }
             return ret
 
-    def __init__(self, data: dict, folder: str, json_file: str):
-        self.json_file = json_file
-        self.folder = folder
+    def __init__(self):
+        self.json_file: str = ""
+        self.folder: str = ""
         self.images: List[Project.Image] = []
-        self._load(data)
 
     def _load(self, data: dict):
         for entry in data:

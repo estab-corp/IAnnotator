@@ -21,5 +21,9 @@ def export_to(name: str, project: Project) -> dict:
     return _formats[name].write(project)
 
 
+def import_from(name: str, data: any) -> Optional[Project]:
+    return _formats[name].read(data)
+
+
 def available_formats() -> Set[str]:
     return _formats.keys()
