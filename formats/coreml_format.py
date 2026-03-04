@@ -1,5 +1,5 @@
-from formats.formats import AbstractFormatHandler, register_format
 from typing import List
+from formats.formats import AbstractFormatHandler, register_format
 from model import Model
 
 

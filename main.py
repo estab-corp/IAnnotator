@@ -2,10 +2,10 @@ import json
 import argparse
 import os
 import sys
+from typing import Optional, Tuple
 from ui import Window
 from project import Project
 import formats
-from typing import Optional, Tuple
 from model import Model
 
 parser = argparse.ArgumentParser(prog='IAnnotator')

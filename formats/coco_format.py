@@ -1,6 +1,6 @@
+from typing import List, Dict, Optional
 from model import Model
 from formats.formats import AbstractFormatHandler, register_format
-from typing import List, Dict, Optional
 
 
 class CocoHandler(AbstractFormatHandler):

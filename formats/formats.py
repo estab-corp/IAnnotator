@@ -1,5 +1,5 @@
-from model import Model
 from typing import Dict, Optional, Set
+from model import Model
 
 
 class AbstractFormatHandler:

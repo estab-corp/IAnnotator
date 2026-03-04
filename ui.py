@@ -1,7 +1,7 @@
-import PIL.Image
 import tkinter as tk
-from PIL import ImageTk
 from typing import List, Optional
+import PIL.Image
+from PIL import ImageTk
 from project import Project
 from model import Model
 HANDLE_SIZE = 10
