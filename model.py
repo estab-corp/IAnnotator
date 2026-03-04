@@ -47,14 +47,3 @@ class Model:
 
     def get_image_path(self, index: int):
         return self.folder + "/" + self.images[index].filename
-
-    def save(self) -> List:
-        ret = []
-        for img in self.images:
-            ret.append(img.save())
-        return ret
-
-    def save_file(self):
-        data = self.save()
-        with open(self.json_file, "w", encoding="utf-8") as f:
-            json.dump(data, f)

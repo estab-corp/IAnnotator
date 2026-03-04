@@ -3,7 +3,7 @@ from typing import Dict, Optional, Set
 
 
 class AbstractFormatHandler:
-    def write(self, model: Model) -> dict:
+    def write(self, model: Model) -> any:
         assert False
 
     def read(self, data: any) -> Optional[Model]:

@@ -1,10 +1,39 @@
 from model import Model
 from formats.formats import AbstractFormatHandler, register_format
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 
 class CocoHandler(AbstractFormatHandler):
-    def write(self, model: Model) -> dict:
+    def read(self, data: any) -> Optional[Model]:
+        model = Model()
+        img_ids: Dict[int, Model.Image] = {}
+        for img_data in data["images"]:
+            img = Model.Image()
+            img.filename = img_data["file_name"]
+            img_ids[img_data["id"]] = img
+            model.images.append(img)
+
+        categories: Dict[int, str] = {}
+        for category_data in data["categories"]:
+            categories[category_data["id"]] = category_data["name"]
+
+        anno_ids: Dict[int, Model.Image.Annotation] = {}
+        for anno_data in data["annotations"]:
+            img_id = anno_data["image_id"]
+            assert img_id in img_ids
+            anno = Model.Image.Annotation()
+            bbox = anno_data["bbox"]
+            anno.x = bbox[0]
+            anno.y = bbox[1]
+            anno.width = bbox[2]
+            anno.height = bbox[3]
+            anno.label = categories[anno_data["category_id"]]
+            anno_ids[anno_data["id"]] = anno
+            img_ids[img_id].annotations.append(anno)
+
+        return model
+
+    def write(self, model: Model) -> any:
         categories: Dict[str, int] = self._gen_categories(model)
         return {
             "images": self._compute_images(model),
@@ -14,7 +43,7 @@ class CocoHandler(AbstractFormatHandler):
 
     def _compute_categories(self, categories: Dict[str, int]) -> List:
         ret = []
-        for cat_id, cat_name in categories.items():
+        for cat_name, cat_id in categories.items():
             ret.append({
                 "id": cat_id,
                 "name": cat_name,

@@ -1,6 +1,7 @@
 import json
 from typing import List
 from model import Model
+from formats import export_to
 
 
 class Project:
@@ -12,13 +13,7 @@ class Project:
     def get_image_path(self, index: int):
         return self.folder + "/" + self.model.images[index].filename
 
-    def save(self) -> List:
-        ret = []
-        for img in self.model.images:
-            ret.append(img.save())
-        return ret
-
     def save_file(self):
-        data = self.save()
+        data = export_to("coreml", self.model)
         with open(self.json_file, "w", encoding="utf-8") as f:
             json.dump(data, f)

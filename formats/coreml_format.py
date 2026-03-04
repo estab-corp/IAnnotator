@@ -4,8 +4,35 @@ from model import Model
 
 
 class CoreMLHandler(AbstractFormatHandler):
-    def export(self, model: Model) -> dict:
-        pass
+    def write(self, model: Model) -> any:
+        ret = []
+        for img in model.images:
+            ret.append(self._write_image(img))
+        return ret
+
+    def _write_annotation(self, anno: Model.Image.Annotation) -> dict:
+        center_x = anno.x + anno.width/2
+        center_y = anno.y + anno.height/2
+        ret = {
+            "label": anno.label,
+            "coordinates": {
+                "x": center_x,
+                "y": center_y,
+                "width": anno.width,
+                "height": anno.height,
+            }
+        }
+        return ret
+
+    def _write_image(self, image: Model.Image) -> dict:
+        annotations = []
+        for annotation in image.annotations:
+            annotations.append(self._write_annotation(annotation))
+        ret = {
+            "imagefilename": image.filename,
+            "annotations": annotations
+        }
+        return ret
 
     def read(self, data: List) -> Model:
         model = Model()
