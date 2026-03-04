@@ -1,5 +1,5 @@
 import tkinter as tk
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import PIL.Image
 from PIL import ImageTk
 from project import Project
@@ -36,12 +36,18 @@ class CanvasImage(tk.Canvas):
         self.bind('<Button-1>', self.on_click)
         self.bind('<B1-Motion>', self.on_move)
 
+    def coords_view_to_img(self, coords) -> Tuple[float, float]:
+        return (coords[0]/self.ratio, coords[1]/self.ratio)
+
+    def coords_img_to_view(self, coords) -> Tuple[float, float]:
+        return (coords[0]*self.ratio, coords[1]*self.ratio)
+
     def on_move(self, event):
         if self.selected_annotation_idx < 0:
             return
         annotation = self.annotations[self.selected_annotation_idx]
-        real_x = event.x/self.ratio
-        real_y = event.y/self.ratio
+        real_x, real_y = self.coords_view_to_img((event.x, event.y))
+
         if self.is_resizing:
             annotation.width = real_x-annotation.x
             annotation.height = real_y-annotation.y
@@ -55,10 +61,9 @@ class CanvasImage(tk.Canvas):
     def on_click(self, event):
         self.selected_annotation_idx = -1
         for a_id, annotation in enumerate(self.annotations):
-            x = annotation.x*self.ratio
-            y = annotation.y*self.ratio
-            w = annotation.width*self.ratio
-            h = annotation.height*self.ratio
+            x, y = self.coords_img_to_view((annotation.x, annotation.y))
+            w, h = self.coords_img_to_view(
+                (annotation.width, annotation.height))
 
             h_x = x+w
             h_y = y+h
@@ -74,8 +79,9 @@ class CanvasImage(tk.Canvas):
                 self.is_resizing = False
                 self.draw_annotations()
                 self.inspector.annotations_selection_changed(a_id)
+                img_event_coords = self.coords_view_to_img((event.x, event.y))
                 self.move_origin_offset = (
-                    event.x/self.ratio - annotation.x, event.y/self.ratio - annotation.y)
+                    img_event_coords[0] - annotation.x, img_event_coords[1] - annotation.y)
                 return
 
     def update_values(self, *_):
@@ -143,15 +149,17 @@ class CanvasImage(tk.Canvas):
             color = "lightblue"
             if a_id == self.selected_annotation_idx:
                 color = "blue"
-            self.rect_ids.append(self.create_rectangle(x*self.ratio, y*self.ratio, (x+annotation.width)*self.ratio,
-                                                       (y+annotation.height)*self.ratio, outline=color, width=3))
-            self.text_ids.append(self.create_text((x+50)*self.ratio, y*self.ratio,
+            r_x0, r_y0 = self.coords_img_to_view((x, y))
+            r_x1, r_y1 = self.coords_img_to_view(
+                (x+annotation.width, y+annotation.height))
+            self.rect_ids.append(self.create_rectangle(
+                r_x0, r_y0, r_x1, r_y1, outline=color, width=3))
+            self.text_ids.append(self.create_text(r_x0+40, r_y0,
                                                   text=f"{annotation.label}-{a_id}", fill='red'))
-            h_x = (x + annotation.width)*self.ratio
-            h_y = (y + annotation.height)*self.ratio
+
             h_size = HANDLE_SIZE/2
             self.handle_ids.append(self.create_rectangle(
-                h_x-h_size, h_y-h_size, h_x+h_size, h_y+h_size, fill="red"))
+                r_x1-h_size, r_y1-h_size, r_x1+h_size, r_y1+h_size, fill="red"))
 
 
 class AnnotationsInspector(tk.Frame):
