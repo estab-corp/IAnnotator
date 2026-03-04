@@ -4,8 +4,7 @@ from typing import List, Dict
 
 
 class CocoHandler(AbstractFormatHandler):
-    def export(self, project: Project) -> dict:
-
+    def write(self, project: Project) -> dict:
         categories: Dict[str, int] = self._gen_categories(project)
         return {
             "images": self._compute_images(project),

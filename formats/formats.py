@@ -1,9 +1,12 @@
 from project import Project
-from typing import Dict
+from typing import Dict, Optional, Set
 
 
 class AbstractFormatHandler:
-    def export(self, project: Project) -> dict:
+    def write(self, project: Project) -> dict:
+        assert (False)
+
+    def read(self, data: any) -> Optional[Project]:
         assert (False)
 
 
@@ -15,4 +18,8 @@ def register_format(name: str, inst: AbstractFormatHandler):
 
 
 def export_to(name: str, project: Project) -> dict:
-    return _formats[name].export(project)
+    return _formats[name].write(project)
+
+
+def available_formats() -> Set[str]:
+    return _formats.keys()
