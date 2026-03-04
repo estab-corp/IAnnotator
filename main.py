@@ -30,10 +30,11 @@ if __name__ == '__main__':
     with open(json_file, encoding="utf-8") as f:
         data = json.load(f)
 
-        project = formats.import_from("coreml", data)
-        if project is None:
+        model = formats.import_from("coreml", data)
+        if model is None:
             sys.exit(1)
         folder = os.path.dirname(json_file)
+        project = Project(model)
         project.folder = folder
         project.json_file = json_file
 

@@ -1,21 +1,21 @@
 from formats.formats import AbstractFormatHandler, register_format
-from project import Project
 from typing import List
+from model import Model
 
 
 class CoreMLHandler(AbstractFormatHandler):
-    def export(self, project: Project) -> dict:
+    def export(self, model: Model) -> dict:
         pass
 
-    def read(self, data: List) -> Project:
-        project = Project()
+    def read(self, data: List) -> Model:
+        model = Model()
         for entry in data:
             img = self._image_from_data(entry)
-            project.images.append(img)
-        return project
+            model.images.append(img)
+        return model
 
-    def _annotation_from_data(self, data: dict) -> Project.Image.Annotation:
-        anno = Project.Image.Annotation()
+    def _annotation_from_data(self, data: dict) -> Model.Image.Annotation:
+        anno = Model.Image.Annotation()
         anno.label = data["label"]
         center_x = data["coordinates"]["x"]
         center_y = data["coordinates"]["y"]
@@ -25,8 +25,8 @@ class CoreMLHandler(AbstractFormatHandler):
         anno.y = center_y - anno.height/2
         return anno
 
-    def _image_from_data(self, data: dict) -> Project.Image:
-        img = Project.Image()
+    def _image_from_data(self, data: dict) -> Model.Image:
+        img = Model.Image()
         img.filename = data["imagefilename"]
         for entry in data["annotations"]:
             annotation = self._annotation_from_data(entry)

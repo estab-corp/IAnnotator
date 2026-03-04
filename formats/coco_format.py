@@ -1,14 +1,14 @@
-from project import Project
+from model import Model
 from formats.formats import AbstractFormatHandler, register_format
 from typing import List, Dict
 
 
 class CocoHandler(AbstractFormatHandler):
-    def write(self, project: Project) -> dict:
-        categories: Dict[str, int] = self._gen_categories(project)
+    def write(self, model: Model) -> dict:
+        categories: Dict[str, int] = self._gen_categories(model)
         return {
-            "images": self._compute_images(project),
-            "annotations": self._compute_annotations(project, categories),
+            "images": self._compute_images(model),
+            "annotations": self._compute_annotations(model, categories),
             "categories": self._compute_categories(categories),
         }
 
@@ -21,26 +21,26 @@ class CocoHandler(AbstractFormatHandler):
             })
         return ret
 
-    def _compute_image(self, image: Project.Image, img_id: int) -> dict:
+    def _compute_image(self, image: Model.Image, img_id: int) -> dict:
         return {
             "id": img_id,
             "file_name": image.filename,
         }
 
-    def _gen_categories(self, project: Project) -> dict:
+    def _gen_categories(self, model: Model) -> dict:
         ret = {}
-        for img in project.images:
+        for img in model.images:
             for anno in img.annotations:
                 ret[anno.label] = len(ret)-1
         return ret
 
-    def _compute_images(self, project: Project) -> List:
+    def _compute_images(self, model: Model) -> List:
         images = []
-        for img_id, img in enumerate(project.images):
+        for img_id, img in enumerate(model.images):
             images.append(self._compute_image(img, img_id))
         return images
 
-    def _compute_annotation(self, annotation: Project.Image.Annotation, img_id: int, anno_id: int, categories: Dict[str, int]) -> dict:
+    def _compute_annotation(self, annotation: Model.Image.Annotation, img_id: int, anno_id: int, categories: Dict[str, int]) -> dict:
         return {
             "image_id": img_id,
             "id": anno_id,
@@ -48,10 +48,10 @@ class CocoHandler(AbstractFormatHandler):
             "category_id": categories[annotation.label],
         }
 
-    def _compute_annotations(self, project: Project, categories: Dict[str, int]) -> List:
+    def _compute_annotations(self, model: Model, categories: Dict[str, int]) -> List:
         annotations = []
         anno_counter = 0
-        for img_id, img in enumerate(project.images):
+        for img_id, img in enumerate(model.images):
             for anno in img.annotations:
                 annotations.append(
                     self._compute_annotation(anno, img_id, anno_counter, categories))

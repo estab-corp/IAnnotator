@@ -3,7 +3,7 @@ import tkinter as tk
 from PIL import ImageTk
 from typing import List, Optional
 from project import Project
-
+from model import Model
 HANDLE_SIZE = 10
 
 
@@ -26,7 +26,7 @@ class CanvasImage(tk.Canvas):
         self.selected_annotation_idx = -1
         self.move_origin_offset = (0, 0)
         self.is_resizing = False
-        self.annotations: List[Project.Image.Annotation] = []
+        self.annotations: List[Model.Image.Annotation] = []
         self.rect_ids = []
         self.text_ids = []
         self.handle_ids = []
@@ -112,7 +112,7 @@ class CanvasImage(tk.Canvas):
         self.image_id = self.create_image(
             self.center_x, self.center_y, image=self.image)
 
-    def open_image(self, filename: str, annotations: List[Project.Image.Annotation]):
+    def open_image(self, filename: str, annotations: List[Model.Image.Annotation]):
         self.selected_annotation_idx = -1
         self.is_resizing = False
         self.delete_previous_image()
@@ -158,7 +158,7 @@ class AnnotationsInspector(tk.Frame):
     def __init__(self, inspector: InspectorInterface, master: tk.Tk, **kwargs):
         super().__init__(master, **kwargs)
         self.inspector = inspector
-        self.current_image: Optional[Project.Image] = None
+        self.current_image: Optional[Model.Image] = None
         self.current_annotation_index = -1
         btton = tk.Button(self, text="add", command=self.add_new)
 
@@ -216,7 +216,7 @@ class AnnotationsInspector(tk.Frame):
         for i, anno in enumerate(self.current_image.annotations):
             self.listbox.insert(i, f"{anno.label}-{i}")
 
-    def update_inspector(self, image: Project.Image):
+    def update_inspector(self, image: Model.Image):
         self.current_image = image
         self.update_annotation_list()
         if len(self.current_image.annotations) > 0:
@@ -240,7 +240,7 @@ class AnnotationsInspector(tk.Frame):
         self.lbl_val.set(self.current_image.annotations[index].label)
 
     def add_new(self):
-        self.current_image.annotations.append(Project.Image.Annotation())
+        self.current_image.annotations.append(Model.Image.Annotation())
         self.update_annotation_list()
         self.inspector.annotations_changed(
             len(self.current_image.annotations)-1)
@@ -295,15 +295,15 @@ class Window(tk.Tk):
             self.left_panel, selectmode=tk.SINGLE, exportselection=False)
         self.listbox.bind("<<ListboxSelect>>", self.img_selection_changed)
         self.listbox.pack(expand=True, fill='y')
-        for i, img in enumerate(self.project.images):
+        for i, img in enumerate(self.project.model.images):
             self.listbox.insert(i, img.filename)
 
     def img_selection_changed(self, _):
         sel_index = self.listbox.curselection()[0]
         img_path = self.project.get_image_path(sel_index)
         self.canvas.open_image(
-            img_path, self.project.images[sel_index].annotations)
-        self.right_panel.update_inspector(self.project.images[sel_index])
+            img_path, self.project.model.images[sel_index].annotations)
+        self.right_panel.update_inspector(self.project.model.images[sel_index])
 
     def annotations_selection_changed(self, index):
         self.right_panel.do_select_annotation(index)
