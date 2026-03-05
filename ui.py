@@ -49,7 +49,7 @@ class CanvasImage(tk.Canvas):
         y /= self.ratio
         y = max(y, 0)
         y = min(y, self.source_image.size[1])
-        return (x, y)
+        return (round(x, 2), round(y, 2))
 
     def coords_img_to_view(self, coords) -> Tuple[float, float]:
         return (coords[0]*self.ratio, coords[1]*self.ratio)
