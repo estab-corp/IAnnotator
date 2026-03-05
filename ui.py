@@ -37,43 +37,38 @@ class CanvasImage(tk.Canvas):
         self.center_x, self.center_y = 0, 0
         self.bind('<Configure>', self.update_values)
         self.bind('<Button-1>', self.on_click)
-        self.bind('<B1-Motion>', self.on_move)
+        self.bind('<B1-Motion>', self.on_mouse_drag)
         self.bind('<Motion>', self.on_mouse_move)
 
     def coords_view_to_img(self, coords) -> Tuple[float, float]:
-        return (coords[0]/self.ratio, coords[1]/self.ratio)
-
-    def coords_view_to_img2(self, coords) -> Tuple[float, float]:
-        x_offset = 7
-        y_offset = 7
-
-        x = self.canvasx(coords[0])-x_offset
-        if x < 0:
-            x = 0
-        y = self.canvasx(coords[1])-y_offset
-        if y < 0:
-            y = 0
+        x = self.canvasx(coords[0])
+        x /= self.ratio
+        x = max(x, 0)
+        x = min(x, self.source_image.size[0])
+        y = self.canvasx(coords[1])
+        y /= self.ratio
+        y = max(y, 0)
+        y = min(y, self.source_image.size[1])
         return (x, y)
 
     def coords_img_to_view(self, coords) -> Tuple[float, float]:
         return (coords[0]*self.ratio, coords[1]*self.ratio)
 
     def on_mouse_move(self, event):
-        coords_in_img = self.coords_view_to_img2((event.x, event.y))
+        coords_in_img = self.coords_view_to_img((event.x, event.y))
         self.inspector.mouse_pos_changed(coords_in_img)
 
-    def on_move(self, event):
+    def on_mouse_drag(self, event):
+        coords_in_img = self.coords_view_to_img((event.x, event.y))
         if self.selected_annotation_idx < 0:
             return
         annotation = self.annotations[self.selected_annotation_idx]
-        real_x, real_y = self.coords_view_to_img((event.x, event.y))
-
         if self.is_resizing:
-            annotation.width = real_x-annotation.x
-            annotation.height = real_y-annotation.y
+            annotation.width = coords_in_img[0]-annotation.x
+            annotation.height = coords_in_img[1]-annotation.y
         else:
-            annotation.x = real_x - self.move_origin_offset[0]
-            annotation.y = real_y - self.move_origin_offset[1]
+            annotation.x = coords_in_img[0]
+            annotation.y = coords_in_img[1]
 
         self.inspector.annotations_changed(self.selected_annotation_idx)
         self.draw_annotations()
@@ -114,7 +109,7 @@ class CanvasImage(tk.Canvas):
             return
         self.delete_previous_image()
         self.resize_image()
-        self.paste_image()
+        self.render_image()
         self.draw_annotations()
 
     def delete_previous_image(self):
@@ -134,9 +129,8 @@ class CanvasImage(tk.Canvas):
         scaled_image = self.source_image.resize((new_width, new_height))
         self.image = ImageTk.PhotoImage(scaled_image)
 
-    def paste_image(self):
-        self.image_id = self.create_image(
-            self.center_x, self.center_y, image=self.image)
+    def render_image(self):
+        self.image_id = self.create_image(0, 0, anchor="nw", image=self.image)
 
     def open_image(self, filename: str, annotations: List[Model.Image.Annotation]) -> Tuple[int, int]:
         self.selected_annotation_idx = -1
@@ -148,7 +142,7 @@ class CanvasImage(tk.Canvas):
         if len(self.annotations) > 0:
             self.selected_annotation_idx = 0
         self.resize_image()
-        self.paste_image()
+        self.render_image()
         self.draw_annotations()
         return self.source_image.size
 
@@ -249,7 +243,6 @@ class AnnotationsInspector(tk.Frame):
         del_btton.grid(row=7, column=1)
 
     def remove_anno(self, _=None):
-        print(f"remove annotation {self.current_annotation_index}")
         del self.current_image.annotations[self.current_annotation_index]
         if self.current_annotation_index >= 1:
             self.current_annotation_index -= 1
@@ -287,7 +280,6 @@ class AnnotationsInspector(tk.Frame):
         self.update_annotation(index)
 
     def update_annotation(self, index: int):
-        print(f"AnnoInspector.update_annotation index={index}")
         if index == -1:
             self.x_val.set("")
             self.y_val.set("")
