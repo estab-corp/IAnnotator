@@ -52,6 +52,10 @@ python3 main.py
 python3 main.py -h #help
 ```
 
+## Todo
+
+Add vertical and horizontal rules in the editor
+
 ## Resources
 
 ### Core ml
