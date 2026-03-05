@@ -168,41 +168,57 @@ class AnnotationsInspector(tk.Frame):
         self.inspector = inspector
         self.current_image: Optional[Model.Image] = None
         self.current_annotation_index = -1
-        btton = tk.Button(self, text="add", command=self.add_new)
+
+        self.annotations_frame = tk.LabelFrame(self, text="annotations")
+        self.annotations_frame.pack(
+            padx=10, pady=10, fill="both")  # , expand="yes")
+
+        self.img_info_frame = tk.LabelFrame(self, text="Image")
+        # , expand="yes")
+        self.img_info_frame.pack(padx=10, pady=10, fill="both")
+
+        label = tk.Label(self.img_info_frame,
+                         text="Ceci est un label dans le LabelFrame")
+        label.pack(padx=5, pady=5)
+
+        btton = tk.Button(self.annotations_frame,
+                          text="add", command=self.add_new)
 
         btton.grid(row=0, column=0)
         self.listbox = tk.Listbox(
-            self, selectmode=tk.SINGLE, exportselection=False)
+            self.annotations_frame, selectmode=tk.SINGLE, exportselection=False)
         self.listbox.grid(row=1, column=1)
         self.listbox.bind("<<ListboxSelect>>", self.selection_changed)
 
-        tk.Label(self, text="x: ").grid(row=2, column=0)
+        tk.Label(self.annotations_frame, text="x: ").grid(row=2, column=0)
         self.x_val = tk.IntVar(value=0)
-        tk.Spinbox(self, textvariable=self.x_val, from_=0, to=2000,
+        tk.Spinbox(self.annotations_frame, textvariable=self.x_val, from_=0, to=2000,
                    increment=1).grid(row=2, column=1)
 
-        tk.Label(self, text="y: ").grid(row=3, column=0)
+        tk.Label(self.annotations_frame, text="y: ").grid(row=3, column=0)
         self.y_val = tk.IntVar(value=0)
-        tk.Spinbox(self, textvariable=self.y_val, from_=0, to=2000,
+        tk.Spinbox(self.annotations_frame, textvariable=self.y_val, from_=0, to=2000,
                    increment=1).grid(row=3, column=1)
 
-        tk.Label(self, text="w: ").grid(row=4, column=0)
+        tk.Label(self.annotations_frame, text="w: ").grid(row=4, column=0)
         self.w_val = tk.IntVar(value=0)
-        tk.Spinbox(self, textvariable=self.w_val, from_=0, to=2000,
+        tk.Spinbox(self.annotations_frame, textvariable=self.w_val, from_=0, to=2000,
                    increment=1).grid(row=4, column=1)
 
-        tk.Label(self, text="h: ").grid(row=5, column=0)
+        tk.Label(self.annotations_frame, text="h: ").grid(row=5, column=0)
         self.h_val = tk.IntVar(value=0)
-        tk.Spinbox(self, textvariable=self.h_val, from_=0, to=2000,
+        tk.Spinbox(self.annotations_frame, textvariable=self.h_val, from_=0, to=2000,
                    increment=1).grid(row=5, column=1)
 
-        tk.Label(self, text="label: ").grid(row=6, column=0)
+        tk.Label(self.annotations_frame, text="label: ").grid(row=6, column=0)
         self.lbl_val = tk.StringVar(value="Label")
-        self.label_entry = tk.Entry(self, textvariable=self.lbl_val, )
+        self.label_entry = tk.Entry(
+            self.annotations_frame, textvariable=self.lbl_val, )
         self.label_entry.grid(row=6, column=1)
         self.label_entry.bind("<Return>", self.update_label)
 
-        del_btton = tk.Button(self, text="remove", command=self.remove_anno)
+        del_btton = tk.Button(self.annotations_frame,
+                              text="remove", command=self.remove_anno)
         del_btton.grid(row=7, column=1)
 
     def remove_anno(self, _=None):
