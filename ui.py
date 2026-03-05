@@ -213,11 +213,13 @@ class AnnotationsInspector(tk.Frame):
         if len(self.current_image.annotations) == 0:
             self.current_annotation_index = -1
         self.update_inspector(self.current_image)
+        self.inspector.annotations_changed(self.current_annotation_index)
 
     def update_label(self, _=None):
         self.current_image.annotations[self.current_annotation_index].label = self.lbl_val.get(
         )
         self.update_annotation_list()
+        self.inspector.annotations_changed(self.current_annotation_index)
 
     def update_annotation_list(self):
         self.listbox.delete(0, tk.END)
@@ -241,6 +243,15 @@ class AnnotationsInspector(tk.Frame):
         self.update_annotation(index)
 
     def update_annotation(self, index: int):
+        print(f"AnnoInspector.update_annotation index={index}")
+        if index == -1:
+            self.x_val.set("")
+            self.y_val.set("")
+            self.w_val.set("")
+            self.h_val.set("")
+            self.lbl_val.set("")
+            return
+
         self.x_val.set(self.current_image.annotations[index].x)
         self.y_val.set(self.current_image.annotations[index].y)
         self.w_val.set(self.current_image.annotations[index].width)
@@ -315,3 +326,4 @@ class Window(tk.Tk):
 
     def annotations_changed(self, index):
         self.right_panel.update_annotation(index)
+        self.canvas.draw_annotations()
