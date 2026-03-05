@@ -14,6 +14,9 @@ class InspectorInterface:
     def annotations_changed(self, index):
         pass
 
+    def mouse_pos_changed(self, coords: Tuple[int, int]):
+        pass
+
 
 class CanvasImage(tk.Canvas):
     def __init__(self, inspector: InspectorInterface, master: tk.Tk, **kwargs):
@@ -35,12 +38,29 @@ class CanvasImage(tk.Canvas):
         self.bind('<Configure>', self.update_values)
         self.bind('<Button-1>', self.on_click)
         self.bind('<B1-Motion>', self.on_move)
+        self.bind('<Motion>', self.on_mouse_move)
 
     def coords_view_to_img(self, coords) -> Tuple[float, float]:
         return (coords[0]/self.ratio, coords[1]/self.ratio)
 
+    def coords_view_to_img2(self, coords) -> Tuple[float, float]:
+        x_offset = 7
+        y_offset = 7
+
+        x = self.canvasx(coords[0])-x_offset
+        if x < 0:
+            x = 0
+        y = self.canvasx(coords[1])-y_offset
+        if y < 0:
+            y = 0
+        return (x, y)
+
     def coords_img_to_view(self, coords) -> Tuple[float, float]:
         return (coords[0]*self.ratio, coords[1]*self.ratio)
+
+    def on_mouse_move(self, event):
+        coords_in_img = self.coords_view_to_img2((event.x, event.y))
+        self.inspector.mouse_pos_changed(coords_in_img)
 
     def on_move(self, event):
         if self.selected_annotation_idx < 0:
@@ -183,6 +203,11 @@ class AnnotationsInspector(tk.Frame):
                          textvariable=self.img_size_val)
         label.pack(padx=5, pady=5)
 
+        self.mouse_pos_val = tk.StringVar(value="x=? y=?")
+        label = tk.Label(self.img_info_frame,
+                         textvariable=self.mouse_pos_val)
+        label.pack(padx=5, pady=5)
+
         btton = tk.Button(self.annotations_frame,
                           text="add", command=self.add_new)
 
@@ -283,6 +308,9 @@ class AnnotationsInspector(tk.Frame):
         self.inspector.annotations_changed(
             len(self.current_image.annotations)-1)
 
+    def mouse_pos_changed(self, coords: Tuple[int, int]):
+        self.mouse_pos_val.set(f"x={int(coords[0])} y={int(coords[1])}")
+
 
 class Window(tk.Tk):
     def __init__(self, project: Project, **kwargs):
@@ -347,3 +375,6 @@ class Window(tk.Tk):
     def annotations_changed(self, index):
         self.right_panel.update_annotation(index)
         self.canvas.draw_annotations()
+
+    def mouse_pos_changed(self, coords: Tuple[int, int]):
+        self.right_panel.mouse_pos_changed(coords)
