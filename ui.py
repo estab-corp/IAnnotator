@@ -55,20 +55,25 @@ class CanvasImage(tk.Canvas):
         return (coords[0]*self.ratio, coords[1]*self.ratio)
 
     def on_mouse_move(self, event):
+        if self.source_image is None:
+            return
         coords_in_img = self.coords_view_to_img((event.x, event.y))
         self.inspector.mouse_pos_changed(coords_in_img)
 
     def on_mouse_drag(self, event):
         coords_in_img = self.coords_view_to_img((event.x, event.y))
+        self.inspector.mouse_pos_changed(coords_in_img)
         if self.selected_annotation_idx < 0:
             return
         annotation = self.annotations[self.selected_annotation_idx]
         if self.is_resizing:
-            annotation.width = coords_in_img[0]-annotation.x
-            annotation.height = coords_in_img[1]-annotation.y
+            annotation.width = round(coords_in_img[0]-annotation.x, 2)
+            annotation.height = round(coords_in_img[1]-annotation.y, 2)
         else:
-            annotation.x = coords_in_img[0]
-            annotation.y = coords_in_img[1]
+            annotation.x = round(
+                coords_in_img[0] - self.move_origin_offset[0], 2)
+            annotation.y = round(
+                coords_in_img[1] - self.move_origin_offset[1], 2)
 
         self.inspector.annotations_changed(self.selected_annotation_idx)
         self.draw_annotations()
