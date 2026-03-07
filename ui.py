@@ -61,6 +61,8 @@ class CanvasImage(tk.Canvas):
         self.inspector.mouse_pos_changed(coords_in_img)
 
     def on_mouse_drag(self, event):
+        if self.source_image is None:
+            return
         coords_in_img = self.coords_view_to_img((event.x, event.y))
         self.inspector.mouse_pos_changed(coords_in_img)
         if self.selected_annotation_idx < 0:
