@@ -3,7 +3,7 @@ import argparse
 import os
 import sys
 from typing import Optional, Tuple
-from annotator.editor import Window
+from annotator.editor import AnnotatorWindow
 from project import Project
 import formats
 from model import Model
@@ -73,5 +73,5 @@ if __name__ == '__main__':
             with open(args.output, "w", encoding="utf-8") as f:
                 json.dump(data, f)
         else:
-            window = Window(project)
+            window = AnnotatorWindow(project)
             window.mainloop()

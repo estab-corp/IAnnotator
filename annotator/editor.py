@@ -313,7 +313,7 @@ class AnnotationsInspector(tk.Frame):
         self.mouse_pos_val.set(f"x={int(coords[0])} y={int(coords[1])}")
 
 
-class Window(tk.Tk):
+class AnnotatorWindow(tk.Tk):
     def __init__(self, project: Project, **kwargs):
         super().__init__(**kwargs)
         self.project = project
