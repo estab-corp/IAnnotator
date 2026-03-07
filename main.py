@@ -3,7 +3,7 @@ import argparse
 import os
 import sys
 from typing import Optional, Tuple
-from ui import Window
+from annotator.editor import Window
 from project import Project
 import formats
 from model import Model
