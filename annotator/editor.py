@@ -200,10 +200,10 @@ class AnnotationsInspector(tk.Frame):
                           text="add", command=self.add_new)
 
         btton.grid(row=0, column=0)
-        self.listbox = tk.Listbox(
+        self.anno_listbox = tk.Listbox(
             self.annotations_frame, selectmode=tk.SINGLE, exportselection=False)
-        self.listbox.grid(row=1, column=1)
-        self.listbox.bind("<<ListboxSelect>>", self.selection_changed)
+        self.anno_listbox.grid(row=1, column=1)
+        self.anno_listbox.bind("<<ListboxSelect>>", self.selection_changed)
 
         tk.Label(self.annotations_frame, text="x: ").grid(row=2, column=0)
         self.x_val = tk.IntVar(value=0)
@@ -250,6 +250,18 @@ class AnnotationsInspector(tk.Frame):
                          textvariable=self.mouse_pos_val)
         label.pack(padx=5, pady=5)
 
+        # classes frame
+        self.class_info_frame = tk.LabelFrame(self, text="Classes")
+        self.class_info_frame.pack(padx=10, pady=10, fill="both")
+        self.classes_listbox = tk.Listbox(
+            self.class_info_frame, selectmode=tk.SINGLE, exportselection=False)
+        self.classes_listbox.grid(row=1, column=1)
+
+    def update_classes_list(self, model: Model):
+        self.classes_listbox.delete(0, tk.END)
+        for i, cls in enumerate(model.get_classes()):
+            self.classes_listbox.insert(i, cls)
+
     def remove_anno(self, _=None):
         del self.current_image.annotations[self.current_annotation_index]
         if self.current_annotation_index >= 1:
@@ -266,9 +278,9 @@ class AnnotationsInspector(tk.Frame):
         self.inspector.annotations_changed(self.current_annotation_index)
 
     def update_annotation_list(self):
-        self.listbox.delete(0, tk.END)
+        self.anno_listbox.delete(0, tk.END)
         for i, anno in enumerate(self.current_image.annotations):
-            self.listbox.insert(i, f"{anno.label}-{i}")
+            self.anno_listbox.insert(i, f"{anno.label}-{i}")
         if len(self.current_image.annotations) > 0:
             self.do_select_annotation(0)
 
@@ -278,13 +290,13 @@ class AnnotationsInspector(tk.Frame):
         self.update_annotation_list()
 
     def selection_changed(self, _=None):
-        sel_index = self.listbox.curselection()[0]
+        sel_index = self.anno_listbox.curselection()[0]
         self.update_annotation(sel_index)
 
     def do_select_annotation(self, index: int):
-        self.listbox.select_clear(0, tk.END)
+        self.anno_listbox.select_clear(0, tk.END)
         self.current_annotation_index = index
-        self.listbox.select_set(index)
+        self.anno_listbox.select_set(index)
         self.update_annotation(index)
 
     def update_annotation(self, index: int):
@@ -348,11 +360,11 @@ class AnnotatorWindow(tk.Tk):
         center.grid_columnconfigure(1, weight=1)
 
         self.left_panel = tk.Frame(center, bg='blue', width=200, height=190)
-        self.right_panel = AnnotationsInspector(self, center, bg='green', width=100,
-                                                height=190, padx=3, pady=3)
-
+        self.inspector = AnnotationsInspector(self, center, bg='green', width=100,
+                                              height=190, padx=3, pady=3)
+        self.inspector.update_classes_list(self.project.model)
         self.left_panel.grid(row=0, column=0, sticky="ns")
-        self.right_panel.grid(row=0, column=2, sticky="ns")
+        self.inspector.grid(row=0, column=2, sticky="ns")
 
         self.canvas = CanvasImage(self, center, bd=2)
         self.canvas.grid(row=0, column=1, sticky="nsew")
@@ -368,15 +380,15 @@ class AnnotatorWindow(tk.Tk):
         img_path = self.project.get_image_path(sel_index)
         img_w, img_h = self.canvas.open_image(
             img_path, self.project.model.images[sel_index].annotations)
-        self.right_panel.update_inspector(
+        self.inspector.update_inspector(
             self.project.model.images[sel_index], img_w, img_h)
 
     def annotations_selection_changed(self, index):
-        self.right_panel.do_select_annotation(index)
+        self.inspector.do_select_annotation(index)
 
     def annotations_changed(self, index):
-        self.right_panel.update_annotation(index)
+        self.inspector.update_annotation(index)
         self.canvas.draw_annotations()
 
     def mouse_pos_changed(self, coords: Tuple[int, int]):
-        self.right_panel.mouse_pos_changed(coords)
+        self.inspector.mouse_pos_changed(coords)
