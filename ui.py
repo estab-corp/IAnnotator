@@ -286,13 +286,14 @@ class AnnotationsInspector(tk.Frame):
 
     def update_annotation(self, index: int):
         if index == -1:
-            self.x_val.set("")
-            self.y_val.set("")
-            self.w_val.set("")
-            self.h_val.set("")
+            self.x_val.set(0)
+            self.y_val.set(0)
+            self.w_val.set(0)
+            self.h_val.set(0)
             self.lbl_val.set("")
             return
-
+        if self.current_image is None:
+            return
         self.x_val.set(self.current_image.annotations[index].x)
         self.y_val.set(self.current_image.annotations[index].y)
         self.w_val.set(self.current_image.annotations[index].width)
@@ -300,6 +301,7 @@ class AnnotationsInspector(tk.Frame):
         self.lbl_val.set(self.current_image.annotations[index].label)
 
     def add_new(self):
+        assert (self.current_image)
         self.current_image.annotations.append(Model.Image.Annotation())
         self.update_annotation_list()
         self.inspector.annotations_changed(
