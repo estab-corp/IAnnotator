@@ -31,8 +31,9 @@ def load_model(data: any, in_format: Optional[str]) -> Tuple[Optional[Model], st
             try:
                 model, _ = load_model(data, form)
                 return (model, form)
-            except ValueError:
+            except Exception:
                 pass
+        raise TypeError("unable to read file")
 
     print(f"load document using format '{in_format}'")
     model = formats.import_from(in_format, data)
