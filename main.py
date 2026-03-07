@@ -2,7 +2,7 @@ import json
 import argparse
 import os
 import sys
-from typing import Optional, Tuple
+from typing import Optional, Tuple, IO
 from annotator.editor import AnnotatorWindow
 from project import Project
 import formats
@@ -24,19 +24,20 @@ def list_formats():
         print(form)
 
 
-def load_model(data: any, in_format: Optional[str]) -> Tuple[Optional[Model], str]:
+def load_model(file: IO, in_format: Optional[str]) -> Tuple[Optional[Model], str]:
     if in_format is None:
         for form in formats.available_formats():
+            file.seek(0)
             print(f"tying format {form}")
             try:
-                model, _ = load_model(data, form)
+                model, _ = load_model(file, form)
                 return (model, form)
             except Exception:
                 pass
         raise TypeError("unable to read file")
 
     print(f"load document using format '{in_format}'")
-    model = formats.import_from(in_format, data)
+    model = formats.import_from(in_format, file)
     return (model, in_format)
 
 
@@ -54,25 +55,26 @@ if __name__ == '__main__':
         parser.print_usage()
         sys.exit(1)
     json_file = args.input
-    with open(json_file, encoding="utf-8") as f:
-        data = json.load(f)
-        model, format = load_model(data, args.in_format)
+    with open(json_file, encoding="utf-8") as file:
+        model, fmt = load_model(file, args.in_format)
         if model is None:
             sys.exit(1)
         folder = os.path.dirname(json_file)
         if args.image_path is not None:
             folder = args.image_path
         project = Project(model)
-        project.default_format = format
+        project.default_format = fmt
         project.folder = folder
         project.json_file = json_file
 
         if args.convert:
             print(
                 f"write document '{args.output}' using format '{args.convert}'")
-            data = formats.export_to(args.convert, model)
-            with open(args.output, "w", encoding="utf-8") as f:
-                json.dump(data, f)
+
+            if not formats.export_to(args.convert, model, args.output):
+                print("Error")
+                sys.exit(1)
+
         else:
             window = AnnotatorWindow(project)
             window.mainloop()

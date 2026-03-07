@@ -1,10 +1,19 @@
-from typing import List
+from typing import Optional, Any, IO
 from formats.formats import AbstractFormatHandler, register_format
 from model import Model
+import json
 
 
 class CoreMLHandler(AbstractFormatHandler):
-    def write(self, model: Model) -> any:
+
+    def write(self, model: Model, file_path: str) -> bool:
+        data = self.do_write(model)
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+            return True
+        return False
+
+    def do_write(self, model: Model) -> Any:
         ret = []
         for img in model.images:
             ret.append(self._write_image(img))
@@ -34,7 +43,9 @@ class CoreMLHandler(AbstractFormatHandler):
         }
         return ret
 
-    def read(self, data: List) -> Model:
+    def read(self, file: IO) -> Optional[Model]:
+        print("DO read coreml")
+        data = json.load(fp=file)
         model = Model()
         for entry in data:
             img = self._image_from_data(entry)

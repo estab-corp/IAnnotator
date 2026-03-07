@@ -1,10 +1,12 @@
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any, IO
 from model import Model
 from formats.formats import AbstractFormatHandler, register_format
+import json
 
 
 class CocoHandler(AbstractFormatHandler):
-    def read(self, data: any) -> Optional[Model]:
+    def read(self, file: IO) -> Optional[Model]:
+        data = json.load(fp=file)
         if "images" not in data:
             raise ValueError("coco: missing 'images' entry")
         if "categories" not in data:
@@ -39,7 +41,14 @@ class CocoHandler(AbstractFormatHandler):
 
         return model
 
-    def write(self, model: Model) -> any:
+    def write(self, model: Model, file_path: str) -> bool:
+        data = self.do_write(model)
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+            return True
+        return False
+
+    def do_write(self, model: Model) -> Any:
         categories: Dict[str, int] = self._gen_categories(model)
         return {
             "images": self._compute_images(model),
