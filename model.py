@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Set
 
 
 class Model:
@@ -46,3 +46,16 @@ class Model:
 
     def get_image_path(self, index: int):
         return self.folder + "/" + self.images[index].filename
+
+    def get_classes(self) -> Set[str]:
+        classes: Set[str] = set()
+        for img in self.images:
+            for anno in img.annotations:
+                classes.add(anno.label)
+        return classes
+
+    def get_num_annotations(self) -> int:
+        count = 0
+        for img in self.images:
+            count += len(img.annotations)
+        return count
