@@ -107,6 +107,12 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.bind_all("<Command-n>", self.add_new_image)
         menu_bar.add_cascade(label="Images", menu=images_menu)
 
+        # Train Menu
+        model_menu = tk.Menu(menu_bar, tearoff=0)
+        model_menu.add_command(
+            label="Train", command=self.create_train_win)
+        menu_bar.add_cascade(label="Model", menu=model_menu)
+
         self.config(menu=menu_bar)
 
     def on_closing(self, _=None):
@@ -114,6 +120,9 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
             self.destroy()
             return
         self.focus_force()
+
+    def create_train_win(self, _=None):
+        print("create new win")
 
     def save(self, _=None):
         if self.project.json_file == "":
