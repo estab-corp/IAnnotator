@@ -191,23 +191,10 @@ class AnnotationsInspector(tk.Frame):
         self.current_image: Optional[Model.Image] = None
         self.current_annotation_index = -1
 
+        # annotation frame
         self.annotations_frame = tk.LabelFrame(self, text="annotations")
         self.annotations_frame.pack(
             padx=10, pady=10, fill="both")  # , expand="yes")
-
-        self.img_info_frame = tk.LabelFrame(self, text="Image")
-        # , expand="yes")
-        self.img_info_frame.pack(padx=10, pady=10, fill="both")
-
-        self.img_size_val = tk.StringVar(value="w=? h=?")
-        label = tk.Label(self.img_info_frame,
-                         textvariable=self.img_size_val)
-        label.pack(padx=5, pady=5)
-
-        self.mouse_pos_val = tk.StringVar(value="x=? y=?")
-        label = tk.Label(self.img_info_frame,
-                         textvariable=self.mouse_pos_val)
-        label.pack(padx=5, pady=5)
 
         btton = tk.Button(self.annotations_frame,
                           text="add", command=self.add_new)
@@ -248,6 +235,20 @@ class AnnotationsInspector(tk.Frame):
         del_btton = tk.Button(self.annotations_frame,
                               text="remove", command=self.remove_anno)
         del_btton.grid(row=7, column=1)
+
+        # image frame
+        self.img_info_frame = tk.LabelFrame(self, text="Image")
+        self.img_info_frame.pack(padx=10, pady=10, fill="both")
+
+        self.img_size_val = tk.StringVar(value="w=? h=?")
+        label = tk.Label(self.img_info_frame,
+                         textvariable=self.img_size_val)
+        label.pack(padx=5, pady=5)
+
+        self.mouse_pos_val = tk.StringVar(value="x=? y=?")
+        label = tk.Label(self.img_info_frame,
+                         textvariable=self.mouse_pos_val)
+        label.pack(padx=5, pady=5)
 
     def remove_anno(self, _=None):
         del self.current_image.annotations[self.current_annotation_index]
