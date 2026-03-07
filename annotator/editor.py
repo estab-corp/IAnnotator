@@ -125,6 +125,12 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
             label="Duplicate Selected", command=self.duplicate_selected_image, accelerator="Shift+Command+D")
         self.bind_all("<Shift-Command-D>", self.duplicate_selected_image)
 
+        # Train Menu
+        model_menu = tk.Menu(menu_bar, tearoff=0)
+        model_menu.add_command(
+            label="Train", command=self.create_train_win)
+        menu_bar.add_cascade(label="Model", menu=model_menu)
+
         self.config(menu=menu_bar)
         self.enable_paste(False)
         self.enable_copy_cut_duplicate(False)
@@ -204,6 +210,9 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.inspector.update_classes_list(self.project.model)
         self.image_tree.update_image_list(self.project.model)
         self.enable_duplicated_selected_image(False)
+
+    def create_train_win(self, _=None):
+        print("create new win")
 
     def save(self, _=None):
         if self.project.json_file == "":
