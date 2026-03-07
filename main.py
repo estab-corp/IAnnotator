@@ -3,6 +3,7 @@ import os
 import sys
 from typing import Optional, Tuple, IO
 from annotator.editor import AnnotatorWindow
+from trainer.editor import TrainerWindow
 from project.project import Project
 import formats
 from project.model import Model
@@ -16,6 +17,7 @@ parser.add_argument('--convert', help="convert to a different format")
 parser.add_argument('--list-formats', action="store_true",
                     help="list supported formats")
 parser.add_argument('--image-path', help="use a different path for images")
+parser.add_argument('--trainer', help="use trainer ui", action="store_true")
 
 
 def list_formats():
@@ -69,7 +71,10 @@ if __name__ == '__main__':
         project.folder = folder
         project.json_file = input_file_path
 
-        if args.convert:
+        if args.trainer:
+            window = TrainerWindow(project)
+            window.mainloop()
+        elif args.convert:
             print(
                 f"write document '{args.output}' using format '{args.convert}'")
 

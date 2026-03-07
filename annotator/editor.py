@@ -11,6 +11,7 @@ from project.undo_manager import UndoManager, ChangeReason, ChangeDiff
 from annotator.image_tree_widget import ImageTreeWidget
 from annotator.canvas import CanvasImage, CanvasWatcher
 from annotator.inspector import AnnotationsInspector
+from trainer.editor import show_train_win
 
 
 class CopyPasteBuffer:
@@ -30,6 +31,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.createcommand("tk::mac::Quit", self.on_closing)
         self.focus_force()
         self._copy_buffer: Optional[CopyPasteBuffer] = None
+        self.trainer_win = None
 
     def _setup_ui(self):
         self.geometry(
@@ -122,7 +124,14 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.focus_force()
 
     def create_train_win(self, _=None):
-        print("create new win")
+        if self.trainer_win is not None:
+            self.trainer_win.lift()
+            return
+        self.trainer_win = show_train_win(self, self.project)
+
+        def unset_trainer_win(_):
+            self.trainer_win = None
+        self.trainer_win.bind("<Destroy>", unset_trainer_win)
 
     def save(self, _=None):
         if self.project.json_file == "":
