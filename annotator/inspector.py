@@ -1,7 +1,29 @@
 import tkinter as tk
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Set, Callable
 from model import Model
 from annotator.inspector_interface import InspectorInterface
+
+
+class ClassListOptionMenu(tk.OptionMenu):
+    def __init__(self, parent, value_changed: Callable[[str], None]):
+        self.classes = [""]
+        self.value_changed = value_changed
+        self.om_variable = tk.StringVar(parent)
+        super().__init__(parent, self.om_variable, *self.classes)
+        self.om_variable.trace("w", self._changed)
+        self.om_variable.set("")
+
+    def _changed(self, *_):
+        if self.value_changed and len(self.om_variable.get()) > 0:
+            self.value_changed(self.om_variable.get())
+
+    def update_list(self, classes: Set[str]):
+        self.classes = list(classes)
+        menu = self["menu"]
+        menu.delete(0, "end")
+        for string in self.classes:
+            menu.add_command(label=string,
+                             command=lambda value=string: self.om_variable.set(value))
 
 
 class AnnotationsInspector(tk.Frame):
@@ -50,8 +72,11 @@ class AnnotationsInspector(tk.Frame):
         self.label_entry = tk.Entry(
             self.annotations_frame, textvariable=self.lbl_val, )
         self.label_entry.grid(row=6, column=1)
-        self.label_entry.bind("<Return>", self.update_label)
+        self.label_entry.bind("<Return>", self.do_update_label)
 
+        self.classes_option_menu = ClassListOptionMenu(
+            self.annotations_frame, self.class_option_changed)
+        self.classes_option_menu.grid(row=6, column=2)
         del_btton = tk.Button(self.annotations_frame,
                               text="remove", command=self.remove_anno)
         del_btton.grid(row=7, column=1)
@@ -78,6 +103,7 @@ class AnnotationsInspector(tk.Frame):
         self.classes_listbox.grid(row=1, column=1)
 
     def update_classes_list(self, model: Model):
+        self.classes_option_menu.update_list(model.get_classes())
         self.classes_listbox.delete(0, tk.END)
         for i, cls in enumerate(model.get_classes()):
             self.classes_listbox.insert(i, cls)
@@ -91,11 +117,16 @@ class AnnotationsInspector(tk.Frame):
         self.update_annotation_list()
         self.inspector.annotations_changed(self.current_annotation_index)
 
-    def update_label(self, _=None):
-        self.current_image.annotations[self.current_annotation_index].label = self.lbl_val.get(
-        )
+    def do_update_label(self, _=None):
+        self.update_label(self.lbl_val.get())
+
+    def update_label(self, label: str):
+        self.current_image.annotations[self.current_annotation_index].label = label
         self.update_annotation_list()
         self.inspector.annotations_changed(self.current_annotation_index)
+
+    def class_option_changed(self, value: str):
+        self.update_label(value)
 
     def update_annotation_list(self):
         self.anno_listbox.delete(0, tk.END)
