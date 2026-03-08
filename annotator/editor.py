@@ -64,6 +64,8 @@ class AnnotatorWindow(tk.Tk):
 
     def annotations_selection_changed(self, index):
         self.inspector.do_select_annotation(index)
+        self.canvas.selected_annotation_idx = index
+        self.canvas.draw_annotations()
 
     def annotations_changed(self, index):
         self.inspector.update_annotation(index)

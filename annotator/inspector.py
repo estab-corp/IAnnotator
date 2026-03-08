@@ -45,7 +45,8 @@ class AnnotationsInspector(tk.Frame):
         self.anno_listbox = tk.Listbox(
             self.annotations_frame, selectmode=tk.SINGLE, exportselection=False)
         self.anno_listbox.grid(row=1, column=1)
-        self.anno_listbox.bind("<<ListboxSelect>>", self.selection_changed)
+        self.anno_listbox.bind("<<ListboxSelect>>",
+                               self.anno_selection_changed)
 
         tk.Label(self.annotations_frame, text="x: ").grid(row=2, column=0)
         self.x_val = tk.IntVar(value=0)
@@ -140,9 +141,10 @@ class AnnotationsInspector(tk.Frame):
         self.img_size_val.set(f"w={img_w} h={img_h}")
         self.update_annotation_list()
 
-    def selection_changed(self, _=None):
+    def anno_selection_changed(self, _=None):
         sel_index = self.anno_listbox.curselection()[0]
         self.update_annotation(sel_index)
+        self.inspector.annotations_selection_changed(sel_index)
 
     def do_select_annotation(self, index: int):
         self.anno_listbox.select_clear(0, tk.END)
