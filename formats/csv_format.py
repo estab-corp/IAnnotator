@@ -37,10 +37,23 @@ class CSVHandler(AbstractFormatHandler):
         self._add_annotation(img, clss, xmin, ymin, xmax, ymax)
         model.images.append(img)
 
+    def _write_anno(self, anno: Model.Image.Annotation, img_path: str, writer):
+        writer.writerow([
+            img_path, 0, 0, anno.label, anno.x, anno.y, anno.x + anno.width, anno.y+anno.height
+        ])
+
+    def _write_img(self, img: Model.Image, writer):
+        for anno in img.annotations:
+            self._write_anno(anno, img.filename, writer)
+
     def write(self, model: Model, file_path: str) -> bool:
-        print("CSVHandler.write not implemented")
-        assert 0
-        return False
+        with open(file_path, 'w', encoding="utf-8") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["filename", "width", "height",
+                            "class", "xmin", "ymin", "xmax", "ymax"])
+            for img in model.images:
+                self._write_img(img, writer)
+        return True
 
 
 register_format("csv", CSVHandler())
