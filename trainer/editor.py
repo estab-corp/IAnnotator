@@ -43,9 +43,12 @@ class TrainerFrame(tk.Frame):
 
         # setup frame
         self.setup_frame = tk.Frame(self.note_book)
+        tk.Label(self.setup_frame, text="Data").pack(side=tk.TOP, anchor=tk.NW)
+
         self.annotations_frame = tk.LabelFrame(
             self.setup_frame, text="training data")
-        self.annotations_frame.pack()
+        self.annotations_frame.pack(side=tk.TOP)
+
         num_classes = len(self.project.model.get_classes())
         num_classes_label = tk.Label(
             self.annotations_frame, text=f"{num_classes} Class{"es" if num_classes > 1 else ""}")
@@ -55,6 +58,14 @@ class TrainerFrame(tk.Frame):
         num_items_label = tk.Label(
             self.annotations_frame, text=f"{num_items} Item{"s" if num_items > 1 else ""}")
         num_items_label.grid(row=0, column=1)
+
+        tk.Label(self.setup_frame, text="Parameters").pack(
+            side=tk.TOP, anchor=tk.NW)
+
+        self.params_frame = tk.LabelFrame(self.setup_frame)
+        train_btton = tk.Button(self.params_frame)
+        train_btton.pack()
+        self.params_frame.pack(side=tk.TOP)
 
         self.note_book.add(self.setup_frame, text="Setup")
 
