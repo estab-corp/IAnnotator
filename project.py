@@ -14,6 +14,4 @@ class Project:
         return self.folder + "/" + self.model.images[index].filename
 
     def save_file(self):
-        data = export_to(self.default_format, self.model)
-        with open(self.json_file, "w", encoding="utf-8") as f:
-            json.dump(data, f)
+        export_to(self.default_format, self.model, self.json_file)
