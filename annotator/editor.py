@@ -59,6 +59,7 @@ class CanvasImage(tk.Canvas):
             return
         coords_in_img = self.coords_view_to_img((event.x, event.y))
         self.inspector.mouse_pos_changed(coords_in_img)
+        self.draw_rulers((event.x, event.y))
 
     def on_mouse_drag(self, event):
         if self.source_image is None:
@@ -79,6 +80,7 @@ class CanvasImage(tk.Canvas):
 
         self.inspector.annotations_changed(self.selected_annotation_idx)
         self.draw_annotations()
+        self.draw_rulers((event.x, event.y))
 
     def on_click(self, event):
         self.selected_annotation_idx = -1
@@ -152,6 +154,14 @@ class CanvasImage(tk.Canvas):
         self.render_image()
         self.draw_annotations()
         return self.source_image.size
+
+    def draw_rulers(self, mouse_pos):
+        self.delete("rulers")
+        color = "red"
+        self.create_line(mouse_pos[0], 0, mouse_pos[0],
+                         self.height, dash=(5, 5), fill=color, tags="rulers")
+        self.create_line(0, mouse_pos[1], self.width,
+                         mouse_pos[1], dash=(5, 5), fill=color, tags="rulers")
 
     def draw_annotations(self):
         for r_id in self.rect_ids:
