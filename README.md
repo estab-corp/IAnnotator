@@ -1,11 +1,17 @@
 # IAnnotator
 
-Simple annotator tool. Currently used to generate annotations for Core Ml's object detector.
+Image annotator tool. This editor helps easily creating object-detector datasets with annotations. It supports multiple formats such as coreml, coco and csv.
 
 ## Features
 
-Add object annotations using bounding box. Will work with COCO and coreml annotations.
-Use the CLI to freely convert from available formats
+- Add object annotations using bounding box,
+- Import/Export/Convert coreml, coco and csv formats
+
+## Usage
+
+```bash
+python3 main.py -h #help
+```
 
 ## Resources
 
