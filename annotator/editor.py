@@ -68,6 +68,7 @@ class AnnotatorWindow(tk.Tk):
     def annotations_changed(self, index):
         self.inspector.update_annotation(index)
         self.canvas.draw_annotations()
+        self.inspector.update_classes_list(self.project.model)
 
     def mouse_pos_changed(self, coords: Tuple[int, int]):
         self.inspector.mouse_pos_changed(coords)
