@@ -25,8 +25,10 @@ class CanvasImage(tk.Canvas):
         self.handle_ids = []
         self.width, self.height = 0, 0
         self.center_x, self.center_y = 0, 0
+        self.is_dragging = False
         self.bind('<Configure>', self.update_values)
-        self.bind('<Button-1>', self.on_click)
+        self.bind('<ButtonPress-1>', self.on_click)
+        self.bind('<ButtonRelease-1>', self.on_release)
         self.bind('<B1-Motion>', self.on_mouse_drag)
         self.bind('<Motion>', self.on_mouse_move)
 
@@ -52,6 +54,7 @@ class CanvasImage(tk.Canvas):
         self.draw_rulers((event.x, event.y))
 
     def on_mouse_drag(self, event):
+        self.is_dragging = True
         if self.source_image is None:
             return
         coords_in_img = self.coords_view_to_img((event.x, event.y))
@@ -71,6 +74,11 @@ class CanvasImage(tk.Canvas):
         self.inspector.annotations_changed(self.selected_annotation_idx)
         self.draw_annotations()
         self.draw_rulers((event.x, event.y))
+
+    def on_release(self, _):
+        if self.is_dragging:
+            print("Was dragging")
+        self.is_dragging = False
 
     def on_click(self, event):
         self.selected_annotation_idx = -1
