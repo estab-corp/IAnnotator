@@ -51,22 +51,22 @@ class AnnotationsInspector(tk.Frame):
         tk.Label(self.annotations_frame, text="x: ").grid(row=2, column=0)
         self.x_val = tk.IntVar(value=0)
         tk.Spinbox(self.annotations_frame, textvariable=self.x_val, from_=0, to=2000,
-                   increment=1).grid(row=2, column=1)
+                   increment=1, command=self.x_changed).grid(row=2, column=1)
 
         tk.Label(self.annotations_frame, text="y: ").grid(row=3, column=0)
         self.y_val = tk.IntVar(value=0)
         tk.Spinbox(self.annotations_frame, textvariable=self.y_val, from_=0, to=2000,
-                   increment=1).grid(row=3, column=1)
+                   increment=1, command=self.y_changed).grid(row=3, column=1)
 
         tk.Label(self.annotations_frame, text="w: ").grid(row=4, column=0)
         self.w_val = tk.IntVar(value=0)
         tk.Spinbox(self.annotations_frame, textvariable=self.w_val, from_=0, to=2000,
-                   increment=1).grid(row=4, column=1)
+                   increment=1, command=self.w_changed).grid(row=4, column=1)
 
         tk.Label(self.annotations_frame, text="h: ").grid(row=5, column=0)
         self.h_val = tk.IntVar(value=0)
         tk.Spinbox(self.annotations_frame, textvariable=self.h_val, from_=0, to=2000,
-                   increment=1).grid(row=5, column=1)
+                   increment=1, command=self.h_changed).grid(row=5, column=1)
 
         tk.Label(self.annotations_frame, text="label: ").grid(row=6, column=0)
         self.lbl_val = tk.StringVar(value="Label")
@@ -102,6 +102,30 @@ class AnnotationsInspector(tk.Frame):
         self.classes_listbox = tk.Listbox(
             self.class_info_frame, selectmode=tk.SINGLE, exportselection=False)
         self.classes_listbox.grid(row=1, column=1)
+
+    def x_changed(self):
+        if self.current_image and self.current_annotation_index != -1:
+            self.current_image.annotations[self.current_annotation_index].x = self.x_val.get(
+            )
+            self.inspector.annotations_changed(self.current_annotation_index)
+
+    def y_changed(self):
+        if self.current_image and self.current_annotation_index != -1:
+            self.current_image.annotations[self.current_annotation_index].y = self.y_val.get(
+            )
+            self.inspector.annotations_changed(self.current_annotation_index)
+
+    def w_changed(self):
+        if self.current_image and self.current_annotation_index != -1:
+            self.current_image.annotations[self.current_annotation_index].width = self.w_val.get(
+            )
+            self.inspector.annotations_changed(self.current_annotation_index)
+
+    def h_changed(self):
+        if self.current_image and self.current_annotation_index != -1:
+            self.current_image.annotations[self.current_annotation_index].height = self.h_val.get(
+            )
+            self.inspector.annotations_changed(self.current_annotation_index)
 
     def update_classes_list(self, model: Model):
         self.classes_option_menu.update_list(model.get_classes())
