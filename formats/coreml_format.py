@@ -5,7 +5,6 @@ import json
 
 
 class CoreMLHandler(AbstractFormatHandler):
-
     def write(self, model: Model, file_path: str) -> bool:
         data = self.do_write(model)
         with open(file_path, "w", encoding="utf-8") as f:

@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Set, Any, IO
+from typing import Dict, Optional, Set, IO
 from project.model import Model
 from abc import ABC, abstractmethod
 
