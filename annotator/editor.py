@@ -1,3 +1,4 @@
+from tkinter import messagebox
 import tkinter as tk
 from typing import Tuple
 from project import Project
@@ -12,6 +13,12 @@ class AnnotatorWindow(tk.Tk):
         self.title(f"Model Annotator file {self.project.folder}")
         self._setup_ui()
         self._setup_menu_bar()
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.createcommand("tk::mac::Quit", self.on_closing)
+
+    def on_closing(self, _=None):
+        if not self.project.dirty or messagebox.askokcancel("Quit", "Unsaved changes, do you want to quit?"):
+            self.destroy()
 
     def _setup_menu_bar(self):
         menu_bar = tk.Menu(self)
@@ -68,6 +75,7 @@ class AnnotatorWindow(tk.Tk):
         self.canvas.draw_annotations()
 
     def annotations_changed(self, index):
+        self.project.dirty = True
         self.inspector.update_annotation(index)
         self.canvas.draw_annotations()
         self.inspector.update_classes_list(self.project.model)
