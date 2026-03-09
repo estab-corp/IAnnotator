@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional, Any, IO
-from model import Model
+from project.model import Model
 from formats.formats import AbstractFormatHandler, register_format
 import json
 

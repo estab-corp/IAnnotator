@@ -1,7 +1,7 @@
 from tkinter import messagebox
 import tkinter as tk
 from typing import Tuple
-from project import Project
+from project.project import Project
 from annotator.canvas import CanvasImage
 from annotator.inspector import AnnotationsInspector
 

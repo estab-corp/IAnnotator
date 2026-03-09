@@ -1,6 +1,6 @@
 import tkinter as tk
 from typing import Optional, Tuple, Set, Callable
-from model import Model
+from project.model import Model
 from annotator.inspector_interface import InspectorInterface
 
 

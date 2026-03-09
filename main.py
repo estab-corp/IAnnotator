@@ -3,9 +3,9 @@ import os
 import sys
 from typing import Optional, Tuple, IO
 from annotator.editor import AnnotatorWindow
-from project import Project
+from project.project import Project
 import formats
-from model import Model
+from project.model import Model
 
 parser = argparse.ArgumentParser(prog='IAnnotator')
 parser.add_argument(

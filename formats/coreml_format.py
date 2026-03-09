@@ -1,6 +1,6 @@
 from typing import Optional, Any, IO
 from formats.formats import AbstractFormatHandler, register_format
-from model import Model
+from project.model import Model
 import json
 
 

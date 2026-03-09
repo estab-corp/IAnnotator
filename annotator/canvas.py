@@ -2,7 +2,7 @@ import tkinter as tk
 from typing import List, Tuple
 import PIL.Image
 from PIL import ImageTk
-from model import Model
+from project.model import Model
 from annotator.inspector_interface import InspectorInterface
 
 HANDLE_SIZE = 10

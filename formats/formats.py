@@ -1,5 +1,5 @@
 from typing import Dict, Optional, Set, Any, IO
-from model import Model
+from project.model import Model
 from abc import ABC, abstractmethod
 
 

@@ -1,5 +1,4 @@
-import json
-from model import Model
+from project.model import Model
 from formats import export_to
 
 
