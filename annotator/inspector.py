@@ -1,7 +1,7 @@
 import tkinter as tk
 from typing import Optional, Tuple, Set, Callable
 from project.model import Model
-from annotator.inspector_interface import InspectorInterface
+from annotator.inspector_interface import InspectorInterface, ChangeReason, ChangeDiff
 
 
 class ClassListOptionMenu(tk.OptionMenu):
@@ -107,25 +107,29 @@ class AnnotationsInspector(tk.Frame):
         if self.current_image and self.current_annotation_index != -1:
             self.current_image.annotations[self.current_annotation_index].x = self.x_val.get(
             )
-            self.inspector.annotations_changed(self.current_annotation_index)
+            self.inspector.annotations_changed(
+                self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY)
 
     def y_changed(self):
         if self.current_image and self.current_annotation_index != -1:
             self.current_image.annotations[self.current_annotation_index].y = self.y_val.get(
             )
-            self.inspector.annotations_changed(self.current_annotation_index)
+            self.inspector.annotations_changed(
+                self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY)
 
     def w_changed(self):
         if self.current_image and self.current_annotation_index != -1:
             self.current_image.annotations[self.current_annotation_index].width = self.w_val.get(
             )
-            self.inspector.annotations_changed(self.current_annotation_index)
+            self.inspector.annotations_changed(
+                self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY)
 
     def h_changed(self):
         if self.current_image and self.current_annotation_index != -1:
             self.current_image.annotations[self.current_annotation_index].height = self.h_val.get(
             )
-            self.inspector.annotations_changed(self.current_annotation_index)
+            self.inspector.annotations_changed(
+                self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY)
 
     def update_classes_list(self, model: Model):
         self.classes_option_menu.update_list(model.get_classes())
@@ -134,21 +138,29 @@ class AnnotationsInspector(tk.Frame):
             self.classes_listbox.insert(i, cls)
 
     def remove_anno(self, _=None):
+        del_anno = self.current_image.annotations[self.current_annotation_index]
         del self.current_image.annotations[self.current_annotation_index]
         if self.current_annotation_index >= 1:
             self.current_annotation_index -= 1
         if len(self.current_image.annotations) == 0:
             self.current_annotation_index = -1
         self.update_annotation_list()
-        self.inspector.annotations_changed(self.current_annotation_index)
+        diff = ChangeDiff()
+        diff.annotation = del_anno
+        self.inspector.annotations_changed(
+            self.current_annotation_index, reason=ChangeReason.ANNO_DELETED, diff=diff)
 
     def do_update_label(self, _=None):
         self.update_label(self.lbl_val.get())
 
     def update_label(self, label: str):
+        diff = ChangeDiff()
+        diff.label = self.current_image.annotations[self.current_annotation_index].label
         self.current_image.annotations[self.current_annotation_index].label = label
         self.update_annotation_list()
-        self.inspector.annotations_changed(self.current_annotation_index)
+
+        self.inspector.annotations_changed(
+            self.current_annotation_index, reason=ChangeReason.LABEL, diff=diff)
 
     def class_option_changed(self, value: str):
         self.update_label(value)
@@ -197,7 +209,7 @@ class AnnotationsInspector(tk.Frame):
         self.current_image.annotations.append(Model.Image.Annotation())
         self.update_annotation_list()
         self.inspector.annotations_changed(
-            len(self.current_image.annotations)-1)
+            len(self.current_image.annotations)-1, reason=ChangeReason.ANNO_ADDED)
 
     def mouse_pos_changed(self, coords: Tuple[int, int]):
         self.mouse_pos_val.set(f"x={int(coords[0])} y={int(coords[1])}")

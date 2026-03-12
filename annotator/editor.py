@@ -1,14 +1,17 @@
 from tkinter import messagebox
 import tkinter as tk
-from typing import Tuple
+from typing import Tuple, Optional
 from project.project import Project
+from project.undo_manager import UndoManager
 from annotator.canvas import CanvasImage
 from annotator.inspector import AnnotationsInspector
+from annotator.inspector_interface import ChangeReason, ChangeDiff
 
 
 class AnnotatorWindow(tk.Tk):
     def __init__(self, project: Project, **kwargs):
         super().__init__(**kwargs)
+        self.undo_manager = UndoManager()
         self.project = project
         self.title(f"Model Annotator file {self.project.folder}")
         self._setup_ui()
@@ -27,7 +30,18 @@ class AnnotatorWindow(tk.Tk):
         menu_file.add_command(
             label="Save", command=self.save, accelerator="Command+s")
         self.bind_all("<Command-s>", self.save)
+
         menu_bar.add_cascade(label="File", menu=menu_file)
+
+        edit_menu = tk.Menu(menu_bar, tearoff=0)
+        edit_menu.add_command(
+            label="undo", command=self.undo, accelerator="Command+z")
+        self.bind_all("<Command-z>", self.undo)
+        edit_menu.add_command(
+            label="redo", command=self.redo, accelerator="Shift+Command+Z")
+        self.bind_all("<Shift-Command-Z>", self.redo)
+        menu_bar.add_cascade(label="Edit", menu=edit_menu)
+
         self.config(menu=menu_bar)
 
     def save(self, _=None):
@@ -74,11 +88,26 @@ class AnnotatorWindow(tk.Tk):
         self.canvas.selected_annotation_idx = index
         self.canvas.draw_annotations()
 
-    def annotations_changed(self, index):
+    def annotations_changed(self, index,  reason: ChangeReason, commit: bool = True, diff: Optional[ChangeDiff] = None):
         self.project.dirty = True
         self.inspector.update_annotation(index)
         self.canvas.draw_annotations()
         self.inspector.update_classes_list(self.project.model)
+        if commit:
+            self.undo_manager.push_change(UndoManager.Command(
+                reason,
+                img_index=self.listbox.curselection()[0],
+                anno_index=index,
+                diff=diff))
 
     def mouse_pos_changed(self, coords: Tuple[int, int]):
         self.inspector.mouse_pos_changed(coords)
+
+    def undo(self, _=None):
+        if self.undo_manager.num_prev_commands() == 0:
+            return
+        self.undo_manager.undo(self.project.model)
+        self.canvas.draw_annotations()
+
+    def redo(self, _=None):
+        pass
