@@ -44,11 +44,6 @@ class AnnotationsInspector(tk.Frame):
                           text="add", command=self.add_new)
 
         btton.grid(row=0, column=0)
-        self.anno_listbox = tk.Listbox(
-            self.annotations_frame, selectmode=tk.SINGLE, exportselection=False)
-        self.anno_listbox.grid(row=1, column=1)
-        self.anno_listbox.bind("<<ListboxSelect>>",
-                               self.anno_selection_changed)
 
         tk.Label(self.annotations_frame, text="x: ").grid(row=2, column=0)
         self.x_val = tk.IntVar(value=0)
@@ -162,7 +157,6 @@ class AnnotationsInspector(tk.Frame):
             self.current_annotation_index -= 1
         if len(self.current_image.annotations) == 0:
             self.current_annotation_index = -1
-        self.update_annotation_list()
         diff = ChangeDiff()
         diff.annotation = del_anno
         self.inspector.annotations_changed(
@@ -176,36 +170,19 @@ class AnnotationsInspector(tk.Frame):
         diff.new_label = label
         diff.prev_label = self.current_image.annotations[self.current_annotation_index].label
         self.current_image.annotations[self.current_annotation_index].label = label
-        self.update_annotation_list()
-
         self.inspector.annotations_changed(
             self.current_annotation_index, reason=ChangeReason.LABEL, diff=diff)
 
     def class_option_changed(self, value: str):
         self.update_label(value)
 
-    def update_annotation_list(self):
-        self.anno_listbox.delete(0, tk.END)
-        for i, anno in enumerate(self.current_image.annotations):
-            self.anno_listbox.insert(i, f"{anno.label}-{i}")
-        if len(self.current_image.annotations) > 0:
-            self.do_select_annotation(0)
-
     def update_inspector(self, image: Model.Image):
         self.current_image = image
         self.img_size_val.set(
             f"w={image.loaded_width} h={image.loaded_height}")
-        self.update_annotation_list()
-
-    def anno_selection_changed(self, _=None):
-        sel_index = self.anno_listbox.curselection()[0]
-        self.update_annotation(sel_index)
-        self.inspector.annotations_selection_changed(sel_index)
 
     def do_select_annotation(self, index: int):
-        self.anno_listbox.select_clear(0, tk.END)
         self.current_annotation_index = index
-        self.anno_listbox.select_set(index)
         self.update_annotation(index)
 
     def update_annotation(self, index: int):
@@ -228,7 +205,6 @@ class AnnotationsInspector(tk.Frame):
         assert (self.current_image)
         new_anno = Model.Image.Annotation()
         self.current_image.annotations.append(new_anno)
-        self.update_annotation_list()
         diff = ChangeDiff()
         diff.annotation = new_anno
         self.inspector.annotations_changed(
