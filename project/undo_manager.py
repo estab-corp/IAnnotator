@@ -47,8 +47,9 @@ class UndoManager:
                 cmd.anno_index, cmd.diff.annotation)
         elif cmd.reason == ChangeReason.LABEL:
             assert cmd.diff
-            assert cmd.diff.label
-            model.images[cmd.img_index].annotations[cmd.anno_index].label = cmd.diff.label
+            assert cmd.diff.prev_label
+            assert cmd.diff.new_label
+            model.images[cmd.img_index].annotations[cmd.anno_index].label = cmd.diff.prev_label
         elif cmd.reason == ChangeReason.ANNO_GEOMETRY:
             assert cmd.diff
             if cmd.diff.x:
@@ -71,7 +72,19 @@ class UndoManager:
         self.head += 1
 
     def _redo_cmd(self, model: Model, cmd: Command):
-        if cmd.reason == ChangeReason.ANNO_GEOMETRY:
+        if cmd.reason == ChangeReason.ANNO_ADDED:
+            assert cmd.diff
+            assert cmd.diff.annotation
+            model.images[cmd.img_index].annotations.insert(
+                cmd.anno_index, cmd.diff.annotation)
+        elif cmd.reason == ChangeReason.ANNO_DELETED:
+            del model.images[cmd.img_index].annotations[cmd.anno_index]
+        elif cmd.reason == ChangeReason.LABEL:
+            assert cmd.diff
+            assert cmd.diff.prev_label
+            assert cmd.diff.new_label
+            model.images[cmd.img_index].annotations[cmd.anno_index].label = cmd.diff.new_label
+        elif cmd.reason == ChangeReason.ANNO_GEOMETRY:
             assert cmd.diff
             if cmd.diff.x:
                 model.images[cmd.img_index].annotations[cmd.anno_index].x += cmd.diff.x

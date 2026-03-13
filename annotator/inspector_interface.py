@@ -16,12 +16,13 @@ class ChangeDiff:
         self.y: Optional[int] = None
         self.w: Optional[int] = None
         self.h: Optional[int] = None
-        self.label: Optional[str] = None
+        self.prev_label: Optional[str] = None
+        self.new_label: Optional[str] = None
         # set when reason is Delete
         self.annotation: Optional[Model.Image.Annotation] = None
 
     def __repr__(self) -> str:
-        return f"dx={self.x} dy={self.y} dw={self.w} dh={self.h} label={self.label}"
+        return f"dx={self.x} dy={self.y} dw={self.w} dh={self.h} label={self.prev_label}"
 
 
 class InspectorInterface:

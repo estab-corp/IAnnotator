@@ -173,7 +173,8 @@ class AnnotationsInspector(tk.Frame):
 
     def update_label(self, label: str):
         diff = ChangeDiff()
-        diff.label = self.current_image.annotations[self.current_annotation_index].label
+        diff.new_label = label
+        diff.prev_label = self.current_image.annotations[self.current_annotation_index].label
         self.current_image.annotations[self.current_annotation_index].label = label
         self.update_annotation_list()
 
@@ -225,10 +226,13 @@ class AnnotationsInspector(tk.Frame):
 
     def add_new(self):
         assert (self.current_image)
-        self.current_image.annotations.append(Model.Image.Annotation())
+        new_anno = Model.Image.Annotation()
+        self.current_image.annotations.append(new_anno)
         self.update_annotation_list()
+        diff = ChangeDiff()
+        diff.annotation = new_anno
         self.inspector.annotations_changed(
-            self.current_annotation_index, reason=ChangeReason.ANNO_ADDED)
+            self.current_annotation_index, reason=ChangeReason.ANNO_ADDED, diff=diff)
         new_index = len(self.current_image.annotations)-1
         self.do_select_annotation(new_index)
         self.inspector.annotations_selection_changed(new_index)
