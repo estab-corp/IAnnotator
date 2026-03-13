@@ -10,6 +10,7 @@ class UndoManager:
             self.img_index = img_index
             self.anno_index = anno_index
             self.diff: Optional[ChangeDiff] = diff
+            self._mark_dirty = False
 
         def __str__(self) -> str:
             return f"img={self.img_index} anno={self.anno_index} reason={self.reason.name} diff={self.diff}"
@@ -18,7 +19,8 @@ class UndoManager:
         self.commands: List[UndoManager.Command] = []
         self.head: int = 0
 
-    def push_change(self, change: Command):
+    def push_change(self, change: Command, mark_dirty: bool):
+        change._mark_dirty = mark_dirty
         last_len = len(self.commands)
         if self.head != last_len:
             # A change is pushed after 'undo' was used. Need to clear the commands *after*.
@@ -32,10 +34,11 @@ class UndoManager:
     def num_next_commands(self) -> int:
         return len(self.commands)-self.head
 
-    def undo(self, model: Model):
+    def undo(self, model: Model) -> bool:
         cmd: UndoManager.Command = self.commands[self.head-1]
         self._undo_cmd(model, cmd)
         self.head -= 1
+        return cmd._mark_dirty
 
     def _undo_cmd(self, model: Model, cmd: Command):
         if cmd.reason == ChangeReason.ANNO_ADDED:

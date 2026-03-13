@@ -90,16 +90,17 @@ class AnnotatorWindow(tk.Tk):
         self.canvas.draw_annotations()
 
     def annotations_changed(self, index,  reason: ChangeReason, commit: bool = True, diff: Optional[ChangeDiff] = None):
-        self.project.dirty = True
         self.inspector.update_annotation(index)
         self.canvas.draw_annotations()
         self.inspector.update_classes_list(self.project.model)
         if commit:
+            was_clean = self.project.dirty is False
+            self.project.dirty = True
             self.undo_manager.push_change(UndoManager.Command(
                 reason,
                 img_index=self.listbox.curselection()[0],
                 anno_index=index,
-                diff=diff))
+                diff=diff), mark_dirty=was_clean)
             self.edit_menu.entryconfig("Undo", state='active')
             self.edit_menu.entryconfig("Redo", state='disabled')
 
@@ -110,7 +111,8 @@ class AnnotatorWindow(tk.Tk):
         if self.undo_manager.num_prev_commands() == 0:
             self.edit_menu.entryconfig("Undo", state='disabled')
             return
-        self.undo_manager.undo(self.project.model)
+        if self.undo_manager.undo(self.project.model):
+            self.project.dirty = False
         self.canvas.draw_annotations()
         sel_index = self.listbox.curselection()[0]
         self.inspector.update_inspector(self.project.model.images[sel_index])
