@@ -78,8 +78,8 @@ class AnnotatorWindow(tk.Tk):
     def img_selection_changed(self, _):
         sel_index = self.listbox.curselection()[0]
         img_path = self.project.get_image_path(sel_index)
-        img_w, img_h = self.canvas.open_image(
-            img_path, self.project.model.images[sel_index].annotations)
+        img_w, img_h = self.canvas.show_image(
+            img_path, self.project.model.images[sel_index])
         self.inspector.update_inspector(
             self.project.model.images[sel_index], img_w, img_h)
 

@@ -1,5 +1,5 @@
 import tkinter as tk
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import PIL.Image
 from PIL import ImageTk
 from project.model import Model
@@ -27,16 +27,16 @@ class CanvasImage(tk.Canvas):
         # when resizing, this will store original height
         self.start_move_h = 0
         self.is_resizing = False
-        self.annotations: List[Model.Image.Annotation] = []
+        self.mdl_image: Optional[Model.Image] = None
         self.rect_ids = []
         self.text_ids = []
         self.handle_ids = []
         self.width, self.height = 0, 0
         self.center_x, self.center_y = 0, 0
         self.is_dragging = False
-        self.bind('<Configure>', self.update_values)
+        self.bind('<Configure>', self._update_values)
         self.bind('<ButtonPress-1>', self.on_click)
-        self.bind('<ButtonRelease-1>', self.on_release)
+        self.bind('<ButtonRelease-1>', self.on_mouse_release)
         self.bind('<B1-Motion>', self.on_mouse_drag)
         self.bind('<Motion>', self.on_mouse_move)
 
@@ -62,7 +62,8 @@ class CanvasImage(tk.Canvas):
         self.draw_rulers((event.x, event.y))
 
     def _calc_new_rect(self, coords_in_img):
-        annotation = self.annotations[self.selected_annotation_idx]
+        assert self.mdl_image
+        annotation = self.mdl_image.annotations[self.selected_annotation_idx]
         if self.is_resizing:
             annotation.width = round(coords_in_img[0]-annotation.x, 2)
             annotation.height = round(coords_in_img[1]-annotation.y, 2)
@@ -86,7 +87,9 @@ class CanvasImage(tk.Canvas):
         self.draw_annotations()
         self.draw_rulers((event.x, event.y))
 
-    def on_release(self, event):
+    def on_mouse_release(self, event):
+        if self.mdl_image is None:
+            return
         if not self.is_dragging or self.selected_annotation_idx == -1:
             return
         self.is_dragging = False
@@ -94,20 +97,22 @@ class CanvasImage(tk.Canvas):
         self._calc_new_rect(coords_in_img)
 
         diff = ChangeDiff()
-        diff.x = self.annotations[self.selected_annotation_idx].x - \
+        diff.x = self.mdl_image.annotations[self.selected_annotation_idx].x - \
             self.start_move_x
-        diff.y = self.annotations[self.selected_annotation_idx].y - \
+        diff.y = self.mdl_image.annotations[self.selected_annotation_idx].y - \
             self.start_move_y
-        diff.w = self.annotations[self.selected_annotation_idx].width - \
+        diff.w = self.mdl_image.annotations[self.selected_annotation_idx].width - \
             self.start_move_w
-        diff.h = self.annotations[self.selected_annotation_idx].height - \
+        diff.h = self.mdl_image.annotations[self.selected_annotation_idx].height - \
             self.start_move_h
         self.inspector.annotations_changed(
             self.selected_annotation_idx, reason=ChangeReason.ANNO_GEOMETRY, diff=diff)
 
     def on_click(self, event):
+        if self.mdl_image is None:
+            return
         self.selected_annotation_idx = -1
-        for a_id, annotation in enumerate(self.annotations):
+        for a_id, annotation in enumerate(self.mdl_image.annotations):
             x, y = self.coords_img_to_view((annotation.x, annotation.y))
             w, h = self.coords_img_to_view(
                 (annotation.width, annotation.height))
@@ -141,7 +146,7 @@ class CanvasImage(tk.Canvas):
                 self.start_move_h = annotation.height
                 return
 
-    def update_values(self, *_):
+    def _update_values(self, *_):
         self.width = self.winfo_width()
         self.height = self.winfo_height()
         self.center_x = self.width//2
@@ -149,12 +154,12 @@ class CanvasImage(tk.Canvas):
 
         if self.image is None:
             return
-        self.delete_previous_image()
+        self._delete_previous_image()
         self.resize_image()
         self.render_image()
         self.draw_annotations()
 
-    def delete_previous_image(self):
+    def _delete_previous_image(self):
         if self.image is None:
             return
         self.delete(self.image_id)
@@ -174,14 +179,14 @@ class CanvasImage(tk.Canvas):
     def render_image(self):
         self.image_id = self.create_image(0, 0, anchor="nw", image=self.image)
 
-    def open_image(self, filename: str, annotations: List[Model.Image.Annotation]) -> Tuple[int, int]:
+    def show_image(self, filename: str, image: Model.Image) -> Tuple[int, int]:
         self.selected_annotation_idx = -1
         self.is_resizing = False
-        self.delete_previous_image()
+        self._delete_previous_image()
         self.source_image = PIL.Image.open(filename)
         self.image = ImageTk.PhotoImage(self.source_image)
-        self.annotations = annotations
-        if len(self.annotations) > 0:
+        self.mdl_image = image
+        if len(self.mdl_image.annotations) > 0:
             self.selected_annotation_idx = 0
         self.resize_image()
         self.render_image()
@@ -197,6 +202,7 @@ class CanvasImage(tk.Canvas):
                          mouse_pos[1], dash=(5, 5), fill=color, tags="rulers")
 
     def draw_annotations(self):
+        assert self.mdl_image
         for r_id in self.rect_ids:
             self.delete(r_id)
         for t_id in self.text_ids:
@@ -208,7 +214,7 @@ class CanvasImage(tk.Canvas):
         self.rect_ids = []
         self.text_ids = []
         self.handle_ids = []
-        for a_id, annotation in enumerate(self.annotations):
+        for a_id, annotation in enumerate(self.mdl_image.annotations):
             x = annotation.x
             y = annotation.y
             color = "lightblue"
