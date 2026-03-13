@@ -18,10 +18,13 @@ class AnnotatorWindow(tk.Tk):
         self._setup_menu_bar()
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.createcommand("tk::mac::Quit", self.on_closing)
+        self.focus_force()
 
     def on_closing(self, _=None):
         if not self.project.dirty or messagebox.askokcancel("Quit", "Unsaved changes, do you want to quit?"):
             self.destroy()
+            return
+        self.focus_force()
 
     def _setup_menu_bar(self):
         menu_bar = tk.Menu(self)
