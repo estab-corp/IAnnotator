@@ -29,6 +29,9 @@ class UndoManager:
     def num_prev_commands(self) -> int:
         return self.head
 
+    def num_next_commands(self) -> int:
+        return len(self.commands)-self.head
+
     def undo(self, model: Model):
         cmd: UndoManager.Command = self.commands[self.head-1]
         self._undo_cmd(model, cmd)

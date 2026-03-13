@@ -101,6 +101,7 @@ class AnnotatorWindow(tk.Tk):
                 anno_index=index,
                 diff=diff))
             self.edit_menu.entryconfig("Undo", state='active')
+            self.edit_menu.entryconfig("Redo", state='disabled')
 
     def mouse_pos_changed(self, coords: Tuple[int, int]):
         self.inspector.mouse_pos_changed(coords)
@@ -113,6 +114,7 @@ class AnnotatorWindow(tk.Tk):
         self.canvas.draw_annotations()
         sel_index = self.listbox.curselection()[0]
         self.inspector.update_inspector(self.project.model.images[sel_index])
+        self.edit_menu.entryconfig("Redo", state='active')
         if self.undo_manager.num_prev_commands() == 0:
             self.edit_menu.entryconfig("Undo", state='disabled')
 
@@ -121,3 +123,6 @@ class AnnotatorWindow(tk.Tk):
         self.canvas.draw_annotations()
         sel_index = self.listbox.curselection()[0]
         self.inspector.update_inspector(self.project.model.images[sel_index])
+        self.edit_menu.entryconfig("Undo", state='active')
+        if self.undo_manager.num_next_commands() == 0:
+            self.edit_menu.entryconfig("Redo", state='disabled')
