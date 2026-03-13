@@ -29,13 +29,14 @@ class AnnotatorWindow(tk.Tk):
     def _setup_menu_bar(self):
         menu_bar = tk.Menu(self)
 
-        menu_file = tk.Menu(menu_bar, tearoff=0)
-        menu_file.add_command(
+        # file Menu
+        file_menu = tk.Menu(menu_bar, tearoff=0)
+        file_menu.add_command(
             label="Save", command=self.save, accelerator="Command+s")
         self.bind_all("<Command-s>", self.save)
+        menu_bar.add_cascade(label="File", menu=file_menu)
 
-        menu_bar.add_cascade(label="File", menu=menu_file)
-
+        # Edit Menu
         self.edit_menu = tk.Menu(menu_bar, tearoff=0)
         self.edit_menu.add_command(
             label="Undo", command=self.undo, accelerator="Command+z", state="disabled")
@@ -50,6 +51,13 @@ class AnnotatorWindow(tk.Tk):
             label="Duplicate", command=self.duplicate, accelerator="Command+D")
         self.bind_all("<Command-d>", self.duplicate)
         self.edit_menu.entryconfig("Duplicate", state='disabled')
+
+        # Images Menu
+        images_menu = tk.Menu(menu_bar, tearoff=0)
+        images_menu.add_command(
+            label="New Image", command=self.add_new_image, accelerator="Command+n")
+        self.bind_all("<Command-n>", self.add_new_image)
+        menu_bar.add_cascade(label="Images", menu=images_menu)
 
         self.config(menu=menu_bar)
 
@@ -154,3 +162,6 @@ class AnnotatorWindow(tk.Tk):
             new_index, reason=ChangeReason.ANNO_ADDED, diff=diff)
         self.inspector.update_annotation_list()
         self.annotations_selection_changed(new_index)
+
+    def add_new_image(self, _=None):
+        print("add new image")
