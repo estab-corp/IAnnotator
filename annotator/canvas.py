@@ -1,5 +1,5 @@
 import tkinter as tk
-from typing import List, Tuple, Optional
+from typing import Tuple, Optional
 import PIL.Image
 from PIL import ImageTk
 from project.model import Model
@@ -13,7 +13,7 @@ class CanvasImage(tk.Canvas):
         super().__init__(master, **kwargs)
         self.inspector = inspector
         self.ratio = 1
-        self.source_image = None
+        self.source_image: Optional[PIL.Image.Image] = None
         self.image_id = None
         self.image = None
         self.selected_annotation_idx = -1
@@ -41,6 +41,7 @@ class CanvasImage(tk.Canvas):
         self.bind('<Motion>', self.on_mouse_move)
 
     def coords_view_to_img(self, coords) -> Tuple[float, float]:
+        assert self.source_image
         x = self.canvasx(coords[0])
         x /= self.ratio
         x = max(x, 0)
@@ -179,11 +180,12 @@ class CanvasImage(tk.Canvas):
     def render_image(self):
         self.image_id = self.create_image(0, 0, anchor="nw", image=self.image)
 
-    def show_image(self, filename: str, image: Model.Image) -> Tuple[int, int]:
+    def show_image(self, filename: str, image: Model.Image):
         self.selected_annotation_idx = -1
         self.is_resizing = False
         self._delete_previous_image()
         self.source_image = PIL.Image.open(filename)
+        assert self.source_image
         self.image = ImageTk.PhotoImage(self.source_image)
         self.mdl_image = image
         if len(self.mdl_image.annotations) > 0:
@@ -191,7 +193,8 @@ class CanvasImage(tk.Canvas):
         self.resize_image()
         self.render_image()
         self.draw_annotations()
-        return self.source_image.size
+        image.loaded_width = self.source_image.size[0]
+        image.loaded_height = self.source_image.size[1]
 
     def draw_rulers(self, mouse_pos):
         self.delete("rulers")

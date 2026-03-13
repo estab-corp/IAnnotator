@@ -78,10 +78,10 @@ class AnnotatorWindow(tk.Tk):
     def img_selection_changed(self, _):
         sel_index = self.listbox.curselection()[0]
         img_path = self.project.get_image_path(sel_index)
-        img_w, img_h = self.canvas.show_image(
+        self.canvas.show_image(
             img_path, self.project.model.images[sel_index])
         self.inspector.update_inspector(
-            self.project.model.images[sel_index], img_w, img_h)
+            self.project.model.images[sel_index])
 
     def annotations_selection_changed(self, index):
         self.inspector.do_select_annotation(index)
@@ -108,6 +108,8 @@ class AnnotatorWindow(tk.Tk):
             return
         self.undo_manager.undo(self.project.model)
         self.canvas.draw_annotations()
+        sel_index = self.listbox.curselection()[0]
+        self.inspector.update_inspector(self.project.model.images[sel_index])
 
     def redo(self, _=None):
         pass

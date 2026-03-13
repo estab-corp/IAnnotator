@@ -28,6 +28,8 @@ class Model:
         def __init__(self):
             self.annotations: List[Model.Image.Annotation] = []
             self.filename: str = ""
+            self.loaded_width = 0
+            self.loaded_height = 0
 
         def save(self) -> dict:
             annotations = []

@@ -190,9 +190,10 @@ class AnnotationsInspector(tk.Frame):
         if len(self.current_image.annotations) > 0:
             self.do_select_annotation(0)
 
-    def update_inspector(self, image: Model.Image, img_w: int, img_h: int):
+    def update_inspector(self, image: Model.Image):
         self.current_image = image
-        self.img_size_val.set(f"w={img_w} h={img_h}")
+        self.img_size_val.set(
+            f"w={image.loaded_width} h={image.loaded_height}")
         self.update_annotation_list()
 
     def anno_selection_changed(self, _=None):
