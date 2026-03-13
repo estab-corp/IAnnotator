@@ -1,14 +1,16 @@
+import os
+import functools
 from tkinter import messagebox
 import tkinter as tk
 from typing import Tuple, Optional
 from tkinter import filedialog
+from formats import available_formats
 from project.project import Project
 from project.model import Model
 from project.undo_manager import UndoManager
 from annotator.canvas import CanvasImage
 from annotator.inspector import AnnotationsInspector
 from annotator.inspector_interface import ChangeReason, ChangeDiff
-import os
 
 
 class AnnotatorWindow(tk.Tk):
@@ -37,6 +39,12 @@ class AnnotatorWindow(tk.Tk):
         file_menu.add_command(
             label="Save", command=self.save, accelerator="Command+s")
         self.bind_all("<Command-s>", self.save)
+
+        save_as_submenu = tk.Menu(file_menu, tearoff=0)
+        file_menu.add_cascade(label="Save as", menu=save_as_submenu)
+        for format_ in available_formats():
+            save_as_submenu.add_command(
+                label=format_, command=functools.partial(self.save_as, format_))
         menu_bar.add_cascade(label="File", menu=file_menu)
 
         # Edit Menu
@@ -72,6 +80,17 @@ class AnnotatorWindow(tk.Tk):
                 return
             self.project.json_file = filename
         self.project.save_file()
+
+    def save_as(self, format_: str):
+        print("save as ", format_)
+        filename = filedialog.asksaveasfilename(
+            title=f"Save project using {format_}",
+            initialdir=self.project.folder,
+        )
+        self.focus_force()
+        if filename == "":
+            return
+        self.project.save_as_file(filename, format_)
 
     def _setup_ui(self):
         self.geometry(

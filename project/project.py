@@ -21,3 +21,11 @@ class Project:
             self.dirty = False
         else:
             print("export error")
+
+    def save_as_file(self, filepath: str, format_: str):
+        if export_to(format_, self.model, filepath):
+            self.dirty = False
+            self.default_format = format_
+            self.json_file = filepath
+        else:
+            print("export error")
