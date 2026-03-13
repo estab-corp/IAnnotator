@@ -1,11 +1,14 @@
 from tkinter import messagebox
 import tkinter as tk
 from typing import Tuple, Optional
+from tkinter import filedialog
 from project.project import Project
+from project.model import Model
 from project.undo_manager import UndoManager
 from annotator.canvas import CanvasImage
 from annotator.inspector import AnnotationsInspector
 from annotator.inspector_interface import ChangeReason, ChangeDiff
+import os
 
 
 class AnnotatorWindow(tk.Tk):
@@ -89,6 +92,10 @@ class AnnotatorWindow(tk.Tk):
             self.left_panel, selectmode=tk.SINGLE, exportselection=False)
         self.listbox.bind("<<ListboxSelect>>", self.img_selection_changed)
         self.listbox.pack(expand=True, fill='y')
+        self.update_image_list()
+
+    def update_image_list(self):
+        self.listbox.delete(0, tk.END)
         for i, img in enumerate(self.project.model.images):
             self.listbox.insert(i, img.filename)
 
@@ -164,4 +171,17 @@ class AnnotatorWindow(tk.Tk):
         self.annotations_selection_changed(new_index)
 
     def add_new_image(self, _=None):
-        print("add new image")
+        filenames = filedialog.askopenfilenames(
+            title="Add new image", initialdir=self.project.folder)
+        self.focus_force()
+        if len(filenames) == 0:
+            return
+        print(f"add image filefilenames={filenames}")
+        for filepath in filenames:
+            p = os.path.relpath(filepath, self.project.folder)
+            print(p)
+            new_img = Model.Image()
+            new_img.filename = p
+            self.project.model.images.append(new_img)
+        self.project.dirty = True
+        self.update_image_list()
