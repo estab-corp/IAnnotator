@@ -33,14 +33,15 @@ class AnnotatorWindow(tk.Tk):
 
         menu_bar.add_cascade(label="File", menu=menu_file)
 
-        edit_menu = tk.Menu(menu_bar, tearoff=0)
-        edit_menu.add_command(
-            label="undo", command=self.undo, accelerator="Command+z")
+        self.edit_menu = tk.Menu(menu_bar, tearoff=0)
+        self.edit_menu.add_command(
+            label="Undo", command=self.undo, accelerator="Command+z", state="disabled")
         self.bind_all("<Command-z>", self.undo)
-        edit_menu.add_command(
-            label="redo", command=self.redo, accelerator="Shift+Command+Z")
+        self.edit_menu.add_command(
+            label="Redo", command=self.redo, accelerator="Shift+Command+Z")
         self.bind_all("<Shift-Command-Z>", self.redo)
-        menu_bar.add_cascade(label="Edit", menu=edit_menu)
+        menu_bar.add_cascade(label="Edit", menu=self.edit_menu)
+        self.edit_menu.entryconfig("Redo", state='disabled')
 
         self.config(menu=menu_bar)
 
@@ -99,17 +100,21 @@ class AnnotatorWindow(tk.Tk):
                 img_index=self.listbox.curselection()[0],
                 anno_index=index,
                 diff=diff))
+            self.edit_menu.entryconfig("Undo", state='active')
 
     def mouse_pos_changed(self, coords: Tuple[int, int]):
         self.inspector.mouse_pos_changed(coords)
 
     def undo(self, _=None):
         if self.undo_manager.num_prev_commands() == 0:
+            self.edit_menu.entryconfig("Undo", state='disabled')
             return
         self.undo_manager.undo(self.project.model)
         self.canvas.draw_annotations()
         sel_index = self.listbox.curselection()[0]
         self.inspector.update_inspector(self.project.model.images[sel_index])
+        if self.undo_manager.num_prev_commands() == 0:
+            self.edit_menu.entryconfig("Undo", state='disabled')
 
     def redo(self, _=None):
         pass
