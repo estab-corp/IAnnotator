@@ -228,7 +228,10 @@ class AnnotationsInspector(tk.Frame):
         self.current_image.annotations.append(Model.Image.Annotation())
         self.update_annotation_list()
         self.inspector.annotations_changed(
-            len(self.current_image.annotations)-1, reason=ChangeReason.ANNO_ADDED)
+            self.current_annotation_index, reason=ChangeReason.ANNO_ADDED)
+        new_index = len(self.current_image.annotations)-1
+        self.do_select_annotation(new_index)
+        self.inspector.annotations_selection_changed(new_index)
 
     def mouse_pos_changed(self, coords: Tuple[int, int]):
         self.mouse_pos_val.set(f"x={int(coords[0])} y={int(coords[1])}")
