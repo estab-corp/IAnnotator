@@ -3,6 +3,8 @@ from typing import Optional, Tuple, Set, Callable
 from project.model import Model
 from annotator.inspector_interface import InspectorInterface, ChangeReason, ChangeDiff
 
+SPIN_BOX_INCREMENT = 1
+
 
 class ClassListOptionMenu(tk.OptionMenu):
     def __init__(self, parent, value_changed: Callable[[str], None]):
@@ -51,22 +53,22 @@ class AnnotationsInspector(tk.Frame):
         tk.Label(self.annotations_frame, text="x: ").grid(row=2, column=0)
         self.x_val = tk.IntVar(value=0)
         tk.Spinbox(self.annotations_frame, textvariable=self.x_val, from_=0, to=2000,
-                   increment=1, command=self.x_changed).grid(row=2, column=1)
+                   increment=SPIN_BOX_INCREMENT, command=self.x_changed).grid(row=2, column=1)
 
         tk.Label(self.annotations_frame, text="y: ").grid(row=3, column=0)
         self.y_val = tk.IntVar(value=0)
         tk.Spinbox(self.annotations_frame, textvariable=self.y_val, from_=0, to=2000,
-                   increment=1, command=self.y_changed).grid(row=3, column=1)
+                   increment=SPIN_BOX_INCREMENT, command=self.y_changed).grid(row=3, column=1)
 
         tk.Label(self.annotations_frame, text="w: ").grid(row=4, column=0)
         self.w_val = tk.IntVar(value=0)
         tk.Spinbox(self.annotations_frame, textvariable=self.w_val, from_=0, to=2000,
-                   increment=1, command=self.w_changed).grid(row=4, column=1)
+                   increment=SPIN_BOX_INCREMENT, command=self.w_changed).grid(row=4, column=1)
 
         tk.Label(self.annotations_frame, text="h: ").grid(row=5, column=0)
         self.h_val = tk.IntVar(value=0)
         tk.Spinbox(self.annotations_frame, textvariable=self.h_val, from_=0, to=2000,
-                   increment=1, command=self.h_changed).grid(row=5, column=1)
+                   increment=SPIN_BOX_INCREMENT, command=self.h_changed).grid(row=5, column=1)
 
         tk.Label(self.annotations_frame, text="label: ").grid(row=6, column=0)
         self.lbl_val = tk.StringVar(value="Label")
@@ -104,32 +106,48 @@ class AnnotationsInspector(tk.Frame):
         self.classes_listbox.grid(row=1, column=1)
 
     def x_changed(self):
-        if self.current_image and self.current_annotation_index != -1:
-            self.current_image.annotations[self.current_annotation_index].x = self.x_val.get(
-            )
-            self.inspector.annotations_changed(
-                self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY)
+        if self.current_image and self.current_annotation_index == -1:
+            return
+        prev_x = self.current_image.annotations[self.current_annotation_index].x
+        new_x = self.x_val.get()
+        self.current_image.annotations[self.current_annotation_index].x = new_x
+        diff = ChangeDiff()
+        diff.x = new_x - prev_x
+        self.inspector.annotations_changed(
+            self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY, diff=diff)
 
     def y_changed(self):
-        if self.current_image and self.current_annotation_index != -1:
-            self.current_image.annotations[self.current_annotation_index].y = self.y_val.get(
-            )
-            self.inspector.annotations_changed(
-                self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY)
+        if self.current_image and self.current_annotation_index == -1:
+            return
+        prev_y = self.current_image.annotations[self.current_annotation_index].y
+        new_y = self.y_val.get()
+        self.current_image.annotations[self.current_annotation_index].y = new_y
+        diff = ChangeDiff()
+        diff.y = new_y - prev_y
+        self.inspector.annotations_changed(
+            self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY, diff=diff)
 
     def w_changed(self):
-        if self.current_image and self.current_annotation_index != -1:
-            self.current_image.annotations[self.current_annotation_index].width = self.w_val.get(
-            )
-            self.inspector.annotations_changed(
-                self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY)
+        if self.current_image and self.current_annotation_index == -1:
+            return
+        prev_w = self.current_image.annotations[self.current_annotation_index].width
+        new_w = self.w_val.get()
+        self.current_image.annotations[self.current_annotation_index].width = new_w
+        diff = ChangeDiff()
+        diff.w = new_w - prev_w
+        self.inspector.annotations_changed(
+            self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY, diff=diff)
 
     def h_changed(self):
-        if self.current_image and self.current_annotation_index != -1:
-            self.current_image.annotations[self.current_annotation_index].height = self.h_val.get(
-            )
-            self.inspector.annotations_changed(
-                self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY)
+        if self.current_image and self.current_annotation_index == -1:
+            return
+        prev_h = self.current_image.annotations[self.current_annotation_index].height
+        new_h = self.h_val.get()
+        self.current_image.annotations[self.current_annotation_index].height = new_h
+        diff = ChangeDiff()
+        diff.h = new_h - prev_h
+        self.inspector.annotations_changed(
+            self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY, diff=diff)
 
     def update_classes_list(self, model: Model):
         self.classes_option_menu.update_list(model.get_classes())
