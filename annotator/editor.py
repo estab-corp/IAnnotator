@@ -117,4 +117,7 @@ class AnnotatorWindow(tk.Tk):
             self.edit_menu.entryconfig("Undo", state='disabled')
 
     def redo(self, _=None):
-        pass
+        self.undo_manager.redo(self.project.model)
+        self.canvas.draw_annotations()
+        sel_index = self.listbox.curselection()[0]
+        self.inspector.update_inspector(self.project.model.images[sel_index])

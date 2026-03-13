@@ -19,6 +19,10 @@ class UndoManager:
         self.head: int = 0
 
     def push_change(self, change: Command):
+        last_len = len(self.commands)
+        if self.head != last_len:
+            # A change is pushed after 'undo' was used. Need to clear the commands *after*.
+            self.commands = self.commands[0:self.head]
         self.commands.append(change)
         self.head = len(self.commands)
 
@@ -26,7 +30,7 @@ class UndoManager:
         return self.head
 
     def undo(self, model: Model):
-        cmd: UndoManager.Command = self.commands.pop()
+        cmd: UndoManager.Command = self.commands[self.head-1]
         self._undo_cmd(model, cmd)
         self.head -= 1
 
@@ -52,6 +56,28 @@ class UndoManager:
                 model.images[cmd.img_index].annotations[cmd.anno_index].width -= cmd.diff.w
             if cmd.diff.h:
                 model.images[cmd.img_index].annotations[cmd.anno_index].height -= cmd.diff.h
+        else:
+            print(f"unhandled undo reason {cmd}")
+            assert 0
+
+    def redo(self, model: Model):
+        if len(self.commands) == 0 or self.head == len(self.commands):
+            return
+        cmd: UndoManager.Command = self.commands[self.head]
+        self._redo_cmd(model, cmd)
+        self.head += 1
+
+    def _redo_cmd(self, model: Model, cmd: Command):
+        if cmd.reason == ChangeReason.ANNO_GEOMETRY:
+            assert cmd.diff
+            if cmd.diff.x:
+                model.images[cmd.img_index].annotations[cmd.anno_index].x += cmd.diff.x
+            if cmd.diff.y:
+                model.images[cmd.img_index].annotations[cmd.anno_index].y += cmd.diff.y
+            if cmd.diff.w:
+                model.images[cmd.img_index].annotations[cmd.anno_index].width += cmd.diff.w
+            if cmd.diff.h:
+                model.images[cmd.img_index].annotations[cmd.anno_index].height += cmd.diff.h
         else:
             print(f"unhandled undo reason {cmd}")
             assert 0
