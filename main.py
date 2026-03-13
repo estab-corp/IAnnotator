@@ -46,25 +46,28 @@ if __name__ == '__main__':
         list_formats()
         sys.exit(0)
     if args.input is None:
-        print("missing input file")
-        parser.print_usage()
+        project = Project(Model())
+        project.default_format = "coco"
+        project.folder = "."
+        window = AnnotatorWindow(project)
+        window.mainloop()
         sys.exit(1)
     if args.convert and args.output is None:
         print("missing output file")
         parser.print_usage()
         sys.exit(1)
-    json_file = args.input
-    with open(json_file, encoding="utf-8") as file:
+    input_file_path = args.input
+    with open(input_file_path, encoding="utf-8") as file:
         model, fmt = load_model(file, args.in_format)
         if model is None:
             sys.exit(1)
-        folder = os.path.dirname(json_file)
+        folder = os.path.dirname(input_file_path)
         if args.image_path is not None:
             folder = args.image_path
         project = Project(model)
         project.default_format = fmt
         project.folder = folder
-        project.json_file = json_file
+        project.json_file = input_file_path
 
         if args.convert:
             print(

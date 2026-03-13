@@ -65,6 +65,12 @@ class AnnotatorWindow(tk.Tk):
         self.config(menu=menu_bar)
 
     def save(self, _=None):
+        if self.project.json_file == "":
+            filename = filedialog.asksaveasfilename(title="Save project as")
+            self.focus_force()
+            if filename == "":
+                return
+            self.project.json_file = filename
         self.project.save_file()
 
     def _setup_ui(self):

@@ -11,7 +11,10 @@ class Project:
         self.dirty = False
 
     def get_image_path(self, index: int):
-        return self.folder + "/" + self.model.images[index].filename
+        prefix = self.folder
+        if len(prefix) > 0:
+            prefix += "/"
+        return prefix + self.model.images[index].filename
 
     def save_file(self):
         if export_to(self.default_format, self.model, self.json_file):
