@@ -42,6 +42,11 @@ class AnnotatorWindow(tk.Tk):
         self.bind_all("<Shift-Command-Z>", self.redo)
         menu_bar.add_cascade(label="Edit", menu=self.edit_menu)
         self.edit_menu.entryconfig("Redo", state='disabled')
+        self.edit_menu.add_separator()
+        self.edit_menu.add_command(
+            label="Duplicate", command=self.duplicate, accelerator="Command+D")
+        self.bind_all("<Command-d>", self.duplicate)
+        self.edit_menu.entryconfig("Duplicate", state='disabled')
 
         self.config(menu=menu_bar)
 
@@ -83,13 +88,15 @@ class AnnotatorWindow(tk.Tk):
             img_path, self.project.model.images[sel_index])
         self.inspector.update_inspector(
             self.project.model.images[sel_index])
+        self.edit_menu.entryconfig("Duplicate", state='active')
 
     def annotations_selection_changed(self, index):
         self.inspector.do_select_annotation(index)
         self.canvas.selected_annotation_idx = index
         self.canvas.draw_annotations()
+        self.edit_menu.entryconfig("Duplicate", state='active')
 
-    def annotations_changed(self, index,  reason: ChangeReason, commit: bool = True, diff: Optional[ChangeDiff] = None):
+    def annotations_changed(self, index: int,  reason: ChangeReason, commit: bool = True, diff: Optional[ChangeDiff] = None):
         self.inspector.update_annotation(index)
         self.canvas.draw_annotations()
         self.inspector.update_classes_list(self.project.model)
@@ -114,8 +121,8 @@ class AnnotatorWindow(tk.Tk):
         if self.undo_manager.undo(self.project.model):
             self.project.dirty = False
         self.canvas.draw_annotations()
-        sel_index = self.listbox.curselection()[0]
-        self.inspector.update_inspector(self.project.model.images[sel_index])
+        img_index = self.listbox.curselection()[0]
+        self.inspector.update_inspector(self.project.model.images[img_index])
         self.edit_menu.entryconfig("Redo", state='active')
         if self.undo_manager.num_prev_commands() == 0:
             self.edit_menu.entryconfig("Undo", state='disabled')
@@ -123,8 +130,24 @@ class AnnotatorWindow(tk.Tk):
     def redo(self, _=None):
         self.undo_manager.redo(self.project.model)
         self.canvas.draw_annotations()
-        sel_index = self.listbox.curselection()[0]
-        self.inspector.update_inspector(self.project.model.images[sel_index])
+        img_index = self.listbox.curselection()[0]
+        self.inspector.update_inspector(self.project.model.images[img_index])
         self.edit_menu.entryconfig("Undo", state='active')
         if self.undo_manager.num_next_commands() == 0:
             self.edit_menu.entryconfig("Redo", state='disabled')
+
+    def duplicate(self, _=None):
+        img_index = self.listbox.curselection()[0]
+        anno_index = self.inspector.current_annotation_index
+        image = self.project.model.images[img_index]
+        new_anno = image.annotations[anno_index].copy()
+        new_anno.x += 20
+        new_anno.y += 20
+        image.annotations.append(new_anno)
+        diff = ChangeDiff()
+        diff.annotation = new_anno
+        new_index = len(image.annotations)-1
+        self.annotations_changed(
+            new_index, reason=ChangeReason.ANNO_ADDED, diff=diff)
+        self.inspector.update_annotation_list()
+        self.annotations_selection_changed(new_index)

@@ -1,4 +1,5 @@
 from typing import List, Set
+import copy
 
 
 class Model:
@@ -11,35 +12,14 @@ class Model:
                 self.x = 300
                 self.y = 400
 
-            def save(self) -> dict:
-                center_x = self.x + self.width/2
-                center_y = self.y + self.height/2
-                ret = {
-                    "label": self.label,
-                    "coordinates": {
-                        "x": center_x,
-                        "y": center_y,
-                        "width": self.width,
-                        "height": self.height,
-                    }
-                }
-                return ret
+            def copy(self) -> 'Model.Image.Annotation':
+                return copy.deepcopy(self)
 
         def __init__(self):
             self.annotations: List[Model.Image.Annotation] = []
             self.filename: str = ""
             self.loaded_width = 0
             self.loaded_height = 0
-
-        def save(self) -> dict:
-            annotations = []
-            for annotation in self.annotations:
-                annotations.append(annotation.save())
-            ret = {
-                "imagefilename": self.filename,
-                "annotations": annotations
-            }
-            return ret
 
     def __init__(self):
         self.json_file: str = ""
