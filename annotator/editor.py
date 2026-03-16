@@ -9,6 +9,7 @@ from formats import available_formats
 from project.project import Project
 from project.model import Model
 from project.undo_manager import UndoManager
+from annotator.image_tree_widget import ImageTreeWidget
 from annotator.canvas import CanvasImage
 from annotator.inspector import AnnotationsInspector
 from annotator.inspector_interface import ChangeReason, ChangeDiff
@@ -124,7 +125,7 @@ class AnnotatorWindow(tk.Tk):
 
         self.canvas = CanvasImage(self, center, bd=2)
         self.canvas.grid(row=0, column=1, sticky="nsew")
-        self.image_tree = ttk.Treeview(self.left_panel)
+        self.image_tree = ImageTreeWidget(self.left_panel)
         self.image_tree.pack(expand=True, fill='y')
         self.image_tree.bind("<<TreeviewSelect>>", self.img_selection_changed)
         self.update_image_list()
