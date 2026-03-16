@@ -23,6 +23,13 @@ class ImageTreeWidget(ttk.Treeview):
     def __init__(self, parent):
         super().__init__(parent)
 
+    def update_selected_annotation(self, anno_index: int):
+        img_index, cur_anno_index = self.get_selected_tuple()
+        if anno_index == cur_anno_index:
+            return
+        new_id = f"A{anno_index}:I{img_index}"
+        self.selection_set(new_id)
+
     def get_selected_image_index(self) -> int:
         item_iid: str = self.selection()[0]
         parent_iid = self.parent(item_iid)
@@ -44,7 +51,7 @@ class ImageTreeWidget(ttk.Treeview):
         sel_anno = int(item_iid[1:].split(":")[0])
         return (sel_image, sel_anno)
 
-    def _get_closest_img_selection(self, sel_img: int, sel_anno: int):
+    def _select_closest_img_anno(self, sel_img: int, sel_anno: int):
         if sel_img == -1:
             return
         # if sel_anno has disappeared, likely due to being remove,
@@ -79,4 +86,4 @@ class ImageTreeWidget(ttk.Treeview):
                     item, tk.END, text=anno.label, iid=f"A{anno_i}:I{i}")
         if sel_img == -1:
             return
-        self._get_closest_img_selection(sel_img, sel_anno)
+        self._select_closest_img_anno(sel_img, sel_anno)

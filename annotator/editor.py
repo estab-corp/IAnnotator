@@ -135,6 +135,7 @@ class AnnotatorWindow(tk.Tk):
         self.canvas.selected_annotation_idx = index
         self.canvas.draw_annotations()
         self.edit_menu.entryconfig("Duplicate", state='active')
+        self.image_tree.update_selected_annotation(index)
 
     def annotations_changed(self, index: int,  reason: ChangeReason, commit: bool = True, diff: Optional[ChangeDiff] = None):
         self.inspector.update_annotation(index)
