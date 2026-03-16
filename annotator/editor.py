@@ -2,9 +2,8 @@ import os
 import functools
 from tkinter import messagebox
 import tkinter as tk
-from tkinter import ttk
-from typing import Tuple, Optional, List
 from tkinter import filedialog
+from typing import Tuple, Optional
 from formats import available_formats
 from project.project import Project
 from project.model import Model
@@ -13,16 +12,6 @@ from annotator.image_tree_widget import ImageTreeWidget
 from annotator.canvas import CanvasImage
 from annotator.inspector import AnnotationsInspector
 from annotator.inspector_interface import ChangeReason, ChangeDiff
-import bisect
-
-
-def find_closest_index(lst: List[int], val: int):
-    i = bisect.bisect_left(lst, val)
-    if i >= len(lst):
-        i = len(lst) - 1
-    elif i and lst[i] - val > val - lst[i - 1]:
-        i = i - 1
-    return i
 
 
 class AnnotatorWindow(tk.Tk):
@@ -128,72 +117,10 @@ class AnnotatorWindow(tk.Tk):
         self.image_tree = ImageTreeWidget(self.left_panel)
         self.image_tree.pack(expand=True, fill='y')
         self.image_tree.bind("<<TreeviewSelect>>", self.img_selection_changed)
-        self.update_image_list()
-
-    def _get_closest_img_selection(self, sel_img: int, sel_anno: int):
-        if sel_img == -1:
-            return
-        # if sel_anno has disappeared, likely due to being remove,
-        # we try and get the previous annotation index. If no lower index, selected the parent image
-        img_item_index = f"I{sel_img}"
-        self.image_tree.item(img_item_index, open=True)
-        anno_items = self.image_tree.get_children(img_item_index)
-
-        item_to_select = ""
-        if len(anno_items) == 0:
-            item_to_select = img_item_index
-        else:
-            indexes: List[int] = []
-            for item in anno_items:
-                anno_idx = int(item[1:].split(":")[0])
-                indexes.append(anno_idx)
-            indexes = sorted(indexes)  # not sure if indexes are sorted
-            next_sel_anno = find_closest_index(indexes, sel_anno)
-            item_to_select = f"A{next_sel_anno}:"+img_item_index
-
-        if item_to_select != "":
-            self.image_tree.selection_set(item_to_select)
-
-    def update_image_list(self):
-        sel_img, sel_anno = self.get_selected_tuple()
-        self.image_tree.delete(*self.image_tree.get_children())
-        for i, img in enumerate(self.project.model.images):
-            item = self.image_tree.insert(
-                "", tk.END, text=img.filename, iid=f"I{i}")
-            for anno_i, anno in enumerate(img.annotations):
-                self.image_tree.insert(
-                    item, tk.END, text=anno.label, iid=f"A{anno_i}:I{i}")
-        if sel_img == -1:
-            return
-        self._get_closest_img_selection(sel_img, sel_anno)
-
-    def _get_index_from_image_iid(self, item_iid: str):
-        assert item_iid.startswith("I")
-        return int(item_iid[1:])
-
-    def get_selected_tuple(self) -> Tuple[int, int]:
-        if len(self.image_tree.selection()) == 0:
-            return (-1, -1)
-        item_iid: str = self.image_tree.selection()[0]
-        parent_iid: str = self.image_tree.parent(item_iid)
-        if parent_iid == "":
-            return (self._get_index_from_image_iid(item_iid), -1)
-        sel_image = self._get_index_from_image_iid(parent_iid)
-        assert item_iid.startswith("A")  # this is an annotation
-        sel_anno = int(item_iid[1:].split(":")[0])
-        return (sel_image, sel_anno)
-
-    def get_selected_image_index(self) -> int:
-        item_iid: str = self.image_tree.selection()[0]
-        parent_iid = self.image_tree.parent(item_iid)
-        if item_iid.startswith("I"):  # this is an image
-            assert parent_iid == ""
-            return self._get_index_from_image_iid(item_iid)
-        assert item_iid.startswith("A")  # this is an annotation
-        return self._get_index_from_image_iid(parent_iid)
+        self.image_tree.update_image_list(self.project.model)
 
     def img_selection_changed(self, _):
-        sel_img_index, sel_anno_index = self.get_selected_tuple()
+        sel_img_index, sel_anno_index = self.image_tree.get_selected_tuple()
         img_path = self.project.get_image_path(sel_img_index)
         self.canvas.show_image(
             img_path, self.project.model.images[sel_img_index])
@@ -215,8 +142,8 @@ class AnnotatorWindow(tk.Tk):
         self.inspector.update_classes_list(self.project.model)
 
         # need to get this before updating image list
-        current_selected_image = self.get_selected_image_index()
-        self.update_image_list()
+        current_selected_image = self.image_tree.get_selected_image_index()
+        self.image_tree.update_image_list(self.project.model)
         if commit:
             was_clean = self.project.dirty is False
             self.project.dirty = True
@@ -238,7 +165,7 @@ class AnnotatorWindow(tk.Tk):
         if self.undo_manager.undo(self.project.model):
             self.project.dirty = False
         self.canvas.draw_annotations()
-        img_index = self.get_selected_image_index()
+        img_index = self.image_tree.get_selected_image_index()
         self.inspector.update_inspector(self.project.model.images[img_index])
         self.edit_menu.entryconfig("Redo", state='active')
         if self.undo_manager.num_prev_commands() == 0:
@@ -247,14 +174,14 @@ class AnnotatorWindow(tk.Tk):
     def redo(self, _=None):
         self.undo_manager.redo(self.project.model)
         self.canvas.draw_annotations()
-        img_index = self.get_selected_image_index()
+        img_index = self.image_tree.get_selected_image_index()
         self.inspector.update_inspector(self.project.model.images[img_index])
         self.edit_menu.entryconfig("Undo", state='active')
         if self.undo_manager.num_next_commands() == 0:
             self.edit_menu.entryconfig("Redo", state='disabled')
 
     def duplicate(self, _=None):
-        img_index = self.get_selected_image_index()
+        img_index = self.image_tree.get_selected_image_index()
         anno_index = self.inspector.current_annotation_index
         image = self.project.model.images[img_index]
         new_anno = image.annotations[anno_index].copy()
@@ -282,4 +209,4 @@ class AnnotatorWindow(tk.Tk):
             new_img.filename = p
             self.project.model.images.append(new_img)
         self.project.dirty = True
-        self.update_image_list()
+        self.image_tree.update_image_list(self.project.model)
