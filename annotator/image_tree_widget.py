@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 import bisect
 from project.model import Model
 
@@ -75,8 +75,15 @@ class ImageTreeWidget(ttk.Treeview):
         if item_to_select != "":
             self.selection_set(item_to_select)
 
+    def _get_open_states(self) -> Dict[str, bool]:
+        ret = {}
+        for entry in self.get_children():
+            ret[entry] = self.item(entry)["open"]
+        return ret
+
     def update_image_list(self, model: Model):
         sel_img, sel_anno = self.get_selected_tuple()
+        open_states = self._get_open_states()
         self.delete(*self.get_children())
         for i, img in enumerate(model.images):
             item = self.insert(
@@ -87,3 +94,5 @@ class ImageTreeWidget(ttk.Treeview):
         if sel_img == -1:
             return
         self._select_closest_img_anno(sel_img, sel_anno)
+        for item, is_open in open_states.items():
+            self.item(item, open=is_open)
