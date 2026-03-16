@@ -211,3 +211,4 @@ class AnnotatorWindow(tk.Tk):
             self.project.model.images.append(new_img)
         self.project.dirty = True
         self.image_tree.update_image_list(self.project.model)
+        self.image_tree.select_image_index(len(self.project.model.images)-1)

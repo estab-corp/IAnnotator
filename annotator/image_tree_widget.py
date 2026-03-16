@@ -23,6 +23,12 @@ class ImageTreeWidget(ttk.Treeview):
     def __init__(self, parent):
         super().__init__(parent)
 
+    def select_image_index(self, img_index: int):
+        cur_img_index, _ = self.get_selected_tuple()
+        if cur_img_index == img_index:
+            return
+        self.selection_set(f"I{img_index}")
+
     def update_selected_annotation(self, anno_index: int):
         img_index, cur_anno_index = self.get_selected_tuple()
         if anno_index == cur_anno_index:
