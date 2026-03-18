@@ -60,6 +60,15 @@ class AnnotatorWindow(tk.Tk):
         self.edit_menu.entryconfig("Redo", state='disabled')
         self.edit_menu.add_separator()
         self.edit_menu.add_command(
+            label="Cut", command=self.cmd_cut, accelerator="Command+x")
+        self.bind_all("<Command-x>", self.cmd_cut)
+        self.edit_menu.add_command(
+            label="Copy", command=self.cmd_copy, accelerator="Command+c")
+        self.bind_all("<Command-c>", self.cmd_copy)
+        self.edit_menu.add_command(
+            label="Paste", command=self.cmd_paste, accelerator="Command+v")
+        self.bind_all("<Command-v>", self.cmd_paste)
+        self.edit_menu.add_command(
             label="Duplicate", command=self.duplicate, accelerator="Command+D")
         self.bind_all("<Command-d>", self.duplicate)
         self.edit_menu.entryconfig("Duplicate", state='disabled')
@@ -126,9 +135,13 @@ class AnnotatorWindow(tk.Tk):
             img_path, self.project.model.images[sel_img_index])
         self.inspector.update_inspector(
             self.project.model.images[sel_img_index])
-        self.edit_menu.entryconfig("Duplicate", state='active')
         if sel_anno_index != -1:
             self.annotations_selection_changed(sel_anno_index)
+        _, anno_idx = self.image_tree.get_selected_tuple()
+        copy_state = "active" if anno_idx != -1 else "disabled"
+        self.edit_menu.entryconfig("Duplicate", state=copy_state)
+        self.edit_menu.entryconfig("Cut", state=copy_state)
+        self.edit_menu.entryconfig("Copy", state=copy_state)
 
     def annotations_selection_changed(self, index):
         self.inspector.do_select_annotation(index)
@@ -195,6 +208,16 @@ class AnnotatorWindow(tk.Tk):
         self.annotations_changed(
             new_index, reason=ChangeReason.ANNO_ADDED, diff=diff)
         self.annotations_selection_changed(new_index)
+
+    def cmd_cut(self, _=None):
+        print("cut")
+
+    def cmd_copy(self, _=None):
+        img_idx, anno_idx = self.image_tree.get_selected_tuple()
+        print(f"Copy img_idx={img_idx} anno_idx={anno_idx}")
+
+    def cmd_paste(self, _=None):
+        print("paste")
 
     def add_new_image(self, _=None):
         filenames = filedialog.askopenfilenames(
