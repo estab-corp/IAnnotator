@@ -1,7 +1,8 @@
 import tkinter as tk
 from typing import Optional, Tuple, Set, Callable
 from project.model import Model
-from annotator.inspector_interface import InspectorInterface, ChangeReason, ChangeDiff
+from project.undo_manager import ChangeReason, ChangeDiff
+from annotator.inspector_interface import InspectorInterface
 
 SPIN_BOX_INCREMENT = 1
 

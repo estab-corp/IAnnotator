@@ -3,8 +3,9 @@ from typing import Tuple, Optional
 import PIL.Image
 from PIL import ImageTk
 from project.model import Model
+from project.undo_manager import ChangeReason, ChangeDiff
 from annotator.inspector_interface import InspectorInterface
-from annotator.inspector_interface import ChangeReason, ChangeDiff
+
 HANDLE_SIZE = 10
 
 

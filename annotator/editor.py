@@ -7,11 +7,10 @@ from typing import Tuple, Optional
 from formats import available_formats
 from project.project import Project
 from project.model import Model
-from project.undo_manager import UndoManager
+from project.undo_manager import UndoManager, ChangeReason, ChangeDiff
 from annotator.image_tree_widget import ImageTreeWidget
 from annotator.canvas import CanvasImage
 from annotator.inspector import AnnotationsInspector
-from annotator.inspector_interface import ChangeReason, ChangeDiff
 
 
 class CopyPasteBuffer:

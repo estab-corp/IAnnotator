@@ -1,6 +1,28 @@
 from typing import List, Optional
 from project.model import Model
-from annotator.inspector_interface import ChangeReason, ChangeDiff
+from enum import IntEnum
+
+
+class ChangeReason(IntEnum):
+    ANNO_GEOMETRY = 0
+    ANNO_DELETED = 1
+    ANNO_ADDED = 2
+    LABEL = 3
+
+
+class ChangeDiff:
+    def __init__(self):
+        self.x: Optional[int] = None
+        self.y: Optional[int] = None
+        self.w: Optional[int] = None
+        self.h: Optional[int] = None
+        self.prev_label: Optional[str] = None
+        self.new_label: Optional[str] = None
+        # set when reason is Delete
+        self.annotation: Optional[Model.Image.Annotation] = None
+
+    def __repr__(self) -> str:
+        return f"dx={self.x} dy={self.y} dw={self.w} dh={self.h} label={self.prev_label}"
 
 
 class UndoManager:
