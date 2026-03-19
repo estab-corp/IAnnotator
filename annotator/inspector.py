@@ -1,9 +1,9 @@
 import tkinter as tk
 from typing import Optional, Tuple, Set, Callable
 from project.model import Model
+from project.project import Project
 from project.undo_manager import ChangeReason, ChangeDiff
-from annotator.inspector_interface import InspectorInterface
-
+from annotator.canvas import CanvasWatcher
 SPIN_BOX_INCREMENT = 1
 
 
@@ -29,10 +29,11 @@ class ClassListOptionMenu(tk.OptionMenu):
                              command=lambda value=string: self.om_variable.set(value))
 
 
-class AnnotationsInspector(tk.Frame):
-    def __init__(self, inspector: InspectorInterface, master: tk.Tk, **kwargs):
+class AnnotationsInspector(tk.Frame, CanvasWatcher):
+    def __init__(self, project: Project, master: tk.Tk, **kwargs):
         super().__init__(master, **kwargs)
-        self.inspector = inspector
+        self.project = project
+        self.current_img_idx: int = -1
         self.current_image: Optional[Model.Image] = None
         self.current_annotation_index = -1
 
@@ -101,49 +102,52 @@ class AnnotationsInspector(tk.Frame):
             self.class_info_frame, selectmode=tk.SINGLE, exportselection=False)
         self.classes_listbox.grid(row=1, column=1)
 
+    def _has_image_and_annotation_selected(self) -> bool:
+        return self.current_image is not None and self.current_annotation_index >= 0
+
     def x_changed(self):
-        if self.current_image and self.current_annotation_index == -1:
+        if not self._has_image_and_annotation_selected():
             return
         prev_x = self.current_image.annotations[self.current_annotation_index].x
         new_x = self.x_val.get()
         self.current_image.annotations[self.current_annotation_index].x = new_x
         diff = ChangeDiff()
         diff.x = new_x - prev_x
-        self.inspector.annotations_changed(
-            self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY, diff=diff)
+        self.project.update_annotation(
+            self.current_img_idx, anno_idx=self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY, diff=diff)
 
     def y_changed(self):
-        if self.current_image and self.current_annotation_index == -1:
+        if not self._has_image_and_annotation_selected():
             return
         prev_y = self.current_image.annotations[self.current_annotation_index].y
         new_y = self.y_val.get()
         self.current_image.annotations[self.current_annotation_index].y = new_y
         diff = ChangeDiff()
         diff.y = new_y - prev_y
-        self.inspector.annotations_changed(
-            self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY, diff=diff)
+        self.project.update_annotation(
+            self.current_img_idx, anno_idx=self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY, diff=diff)
 
     def w_changed(self):
-        if self.current_image and self.current_annotation_index == -1:
+        if not self._has_image_and_annotation_selected():
             return
         prev_w = self.current_image.annotations[self.current_annotation_index].width
         new_w = self.w_val.get()
         self.current_image.annotations[self.current_annotation_index].width = new_w
         diff = ChangeDiff()
         diff.w = new_w - prev_w
-        self.inspector.annotations_changed(
-            self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY, diff=diff)
+        self.project.update_annotation(
+            self.current_img_idx, anno_idx=self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY, diff=diff)
 
     def h_changed(self):
-        if self.current_image and self.current_annotation_index == -1:
+        if not self._has_image_and_annotation_selected():
             return
         prev_h = self.current_image.annotations[self.current_annotation_index].height
         new_h = self.h_val.get()
         self.current_image.annotations[self.current_annotation_index].height = new_h
         diff = ChangeDiff()
         diff.h = new_h - prev_h
-        self.inspector.annotations_changed(
-            self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY, diff=diff)
+        self.project.update_annotation(
+            self.current_img_idx, anno_idx=self.current_annotation_index, reason=ChangeReason.ANNO_GEOMETRY, diff=diff)
 
     def update_classes_list(self, model: Model):
         self.classes_option_menu.update_list(model.get_classes())
@@ -152,18 +156,12 @@ class AnnotationsInspector(tk.Frame):
             self.classes_listbox.insert(i, cls)
 
     def remove_anno(self, _=None):
-        del_anno = self.current_image.annotations[self.current_annotation_index]
-        del self.current_image.annotations[self.current_annotation_index]
-        if self.current_annotation_index >= 1:
-            self.current_annotation_index -= 1
-        if len(self.current_image.annotations) == 0:
-            self.current_annotation_index = -1
-        diff = ChangeDiff()
-        diff.annotation = del_anno
-        self.inspector.annotations_changed(
-            self.current_annotation_index, reason=ChangeReason.ANNO_DELETED, diff=diff)
+        self.project.remove_annotation(
+            img_idx=self.current_img_idx, anno_idx=self.current_annotation_index)
 
     def do_update_label(self, _=None):
+        if not self._has_image_and_annotation_selected():
+            return
         self.update_label(self.lbl_val.get())
 
     def update_label(self, label: str):
@@ -171,16 +169,18 @@ class AnnotationsInspector(tk.Frame):
         diff.new_label = label
         diff.prev_label = self.current_image.annotations[self.current_annotation_index].label
         self.current_image.annotations[self.current_annotation_index].label = label
-        self.inspector.annotations_changed(
-            self.current_annotation_index, reason=ChangeReason.LABEL, diff=diff)
+
+        self.project.update_annotation(
+            self.current_img_idx, anno_idx=self.current_annotation_index, reason=ChangeReason.LABEL, diff=diff)
 
     def class_option_changed(self, value: str):
         self.update_label(value)
 
-    def update_inspector(self, image: Model.Image):
-        self.current_image = image
+    def update_inspector_image(self, img_idx: int):
+        self.current_img_idx = img_idx
+        self.current_image = self.project.model.images[img_idx]
         self.img_size_val.set(
-            f"w={image.loaded_width} h={image.loaded_height}")
+            f"w={self.current_image.loaded_width} h={self.current_image.loaded_height}")
 
     def do_select_annotation(self, index: int):
         self.current_annotation_index = index
@@ -202,15 +202,13 @@ class AnnotationsInspector(tk.Frame):
 
     def add_new(self):
         assert (self.current_image)
-        new_anno = Model.Image.Annotation()
-        self.current_image.annotations.append(new_anno)
-        diff = ChangeDiff()
-        diff.annotation = new_anno
-        self.inspector.annotations_changed(
-            self.current_annotation_index, reason=ChangeReason.ANNO_ADDED, diff=diff)
+        self.project.add_annotation(img_idx=self.current_img_idx)
         new_index = len(self.current_image.annotations)-1
         self.do_select_annotation(new_index)
-        self.inspector.annotations_selection_changed(new_index)
 
     def mouse_pos_changed(self, coords: Tuple[int, int]):
         self.mouse_pos_val.set(f"x={int(coords[0])} y={int(coords[1])}")
+
+    def annotation_is_changing(self, img_idx: int, anno_idx: int):
+        assert img_idx == self.current_img_idx
+        self.update_annotation(anno_idx)

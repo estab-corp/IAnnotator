@@ -36,15 +36,6 @@ class ImageTreeWidget(ttk.Treeview):
         new_id = f"A{anno_index}:I{img_index}"
         self.selection_set(new_id)
 
-    def get_selected_image_index(self) -> int:
-        item_iid: str = self.selection()[0]
-        parent_iid = self.parent(item_iid)
-        if item_iid.startswith("I"):  # this is an image
-            assert parent_iid == ""
-            return _get_index_from_image_iid(item_iid)
-        assert item_iid.startswith("A")  # this is an annotation
-        return _get_index_from_image_iid(parent_iid)
-
     def get_selected_tuple(self) -> Tuple[int, int]:
         if len(self.selection()) == 0:
             return (-1, -1)

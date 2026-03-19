@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import filedialog
 from typing import Tuple, Optional
 from formats import available_formats
-from project.project import Project
+from project.project import Project, ProjectWatcher
 from project.model import Model
 from project.undo_manager import UndoManager, ChangeReason, ChangeDiff
 from annotator.image_tree_widget import ImageTreeWidget
@@ -18,10 +18,11 @@ class CopyPasteBuffer:
         self.annotation = annotation
 
 
-class AnnotatorWindow(tk.Tk):
+class AnnotatorWindow(tk.Tk, ProjectWatcher):
     def __init__(self, project: Project, **kwargs):
         super().__init__(**kwargs)
         self.project = project
+        self.project.watchers.append(self)
         self.title(f"Model Annotator file {self.project.folder}")
         self._setup_ui()
         self._setup_menu_bar()
@@ -120,13 +121,14 @@ class AnnotatorWindow(tk.Tk):
         center.grid_columnconfigure(1, weight=1)
 
         self.left_panel = tk.Frame(center, bg='blue', width=200, height=190)
-        self.inspector = AnnotationsInspector(self, center, bg='green', width=100,
+        self.inspector = AnnotationsInspector(project=self.project, master=center, bg='green', width=100,
                                               height=190, padx=3, pady=3)
         self.inspector.update_classes_list(self.project.model)
         self.left_panel.grid(row=0, column=0, sticky="ns")
         self.inspector.grid(row=0, column=2, sticky="ns")
 
-        self.canvas = CanvasImage(self, center, bd=2)
+        self.canvas = CanvasImage(
+            project=self.project, watcher=self.inspector, master=center, bd=2)
         self.canvas.grid(row=0, column=1, sticky="nsew")
         self.image_tree = ImageTreeWidget(self.left_panel)
         self.image_tree.pack(expand=True, fill='y')
@@ -137,9 +139,8 @@ class AnnotatorWindow(tk.Tk):
         sel_img_index, sel_anno_index = self.image_tree.get_selected_tuple()
         img_path = self.project.get_image_path(sel_img_index)
         self.canvas.show_image(
-            img_path, self.project.model.images[sel_img_index])
-        self.inspector.update_inspector(
-            self.project.model.images[sel_img_index])
+            img_path,  sel_img_index)
+        self.inspector.update_inspector_image(sel_img_index)
         if sel_anno_index != -1:
             self.annotations_selection_changed(sel_anno_index)
         _, anno_idx = self.image_tree.get_selected_tuple()
@@ -155,13 +156,21 @@ class AnnotatorWindow(tk.Tk):
         self.edit_menu.entryconfig("Duplicate", state='active')
         self.image_tree.update_selected_annotation(index)
 
+    def annotation_list_changed(self, img_index: int):
+        print(f"Editor.Watcher.annotation_list_changed img_index={img_index}")
+        _, anno_idx = self.image_tree.get_selected_tuple()
+        self.inspector.update_annotation(anno_idx)
+        self.canvas.draw_annotations()
+        self.inspector.update_classes_list(self.project.model)
+        self.image_tree.update_image_list(self.project.model)
+
     def annotations_changed(self, index: int,  reason: ChangeReason, commit: bool = True, diff: Optional[ChangeDiff] = None):
         self.inspector.update_annotation(index)
         self.canvas.draw_annotations()
         self.inspector.update_classes_list(self.project.model)
 
         # need to get this before updating image list
-        current_selected_image = self.image_tree.get_selected_image_index()
+        current_selected_image, _ = self.image_tree.get_selected_tuple()
         self.image_tree.update_image_list(self.project.model)
         if commit:
             was_clean = self.project.dirty is False
@@ -174,9 +183,6 @@ class AnnotatorWindow(tk.Tk):
             self.edit_menu.entryconfig("Undo", state='active')
             self.edit_menu.entryconfig("Redo", state='disabled')
 
-    def mouse_pos_changed(self, coords: Tuple[int, int]):
-        self.inspector.mouse_pos_changed(coords)
-
     def undo(self, _=None):
         if self.project.undo_manager.num_prev_commands() == 0:
             self.edit_menu.entryconfig("Undo", state='disabled')
@@ -184,8 +190,8 @@ class AnnotatorWindow(tk.Tk):
         if self.project.undo_manager.undo(self.project.model):
             self.project.dirty = False
         self.canvas.draw_annotations()
-        img_index = self.image_tree.get_selected_image_index()
-        self.inspector.update_inspector(self.project.model.images[img_index])
+        img_idx, _ = self.image_tree.get_selected_tuple()
+        self.inspector.update_inspector_image(img_idx)
         self.image_tree.update_image_list(self.project.model)
         self.edit_menu.entryconfig("Redo", state='active')
         if self.project.undo_manager.num_prev_commands() == 0:
@@ -194,37 +200,21 @@ class AnnotatorWindow(tk.Tk):
     def redo(self, _=None):
         self.project.undo_manager.redo(self.project.model)
         self.canvas.draw_annotations()
-        img_index = self.image_tree.get_selected_image_index()
-        self.inspector.update_inspector(self.project.model.images[img_index])
+        img_idx, _ = self.image_tree.get_selected_tuple()
+        self.inspector.update_inspector_image(img_idx)
         self.image_tree.update_image_list(self.project.model)
         self.edit_menu.entryconfig("Undo", state='active')
         if self.project.undo_manager.num_next_commands() == 0:
             self.edit_menu.entryconfig("Redo", state='disabled')
 
     def duplicate(self, _=None):
-        img_index = self.image_tree.get_selected_image_index()
+        img_idx, _ = self.image_tree.get_selected_tuple()
         anno_index = self.inspector.current_annotation_index
-        image = self.project.model.images[img_index]
-        new_anno = image.annotations[anno_index].copy()
-        new_anno.x += 20
-        new_anno.y += 20
-        image.annotations.append(new_anno)
-        diff = ChangeDiff()
-        diff.annotation = new_anno
-        new_index = len(image.annotations)-1
-        self.annotations_changed(
-            new_index, reason=ChangeReason.ANNO_ADDED, diff=diff)
-        self.annotations_selection_changed(new_index)
+        self.project.duplicate_annotation(img_idx=img_idx, anno_idx=anno_index)
 
     def remove_selected_anno(self):
         img_idx, anno_idx = self.image_tree.get_selected_tuple()
-        delete_anno = self.project.model.images[img_idx].annotations[anno_idx]
-        del self.project.model.images[img_idx].annotations[anno_idx]
-
-        diff = ChangeDiff()
-        diff.annotation = delete_anno
-        self.annotations_changed(
-            anno_idx, reason=ChangeReason.ANNO_DELETED, diff=diff)
+        self.project.remove_annotation(img_idx, anno_idx)
 
     def cmd_cut(self, _=None):
         img_idx, anno_idx = self.image_tree.get_selected_tuple()
@@ -244,8 +234,8 @@ class AnnotatorWindow(tk.Tk):
         if self._copy_buffer is None:
             return
         new_anno = self._copy_buffer.annotation.copy()
-        img_index = self.image_tree.get_selected_image_index()
-        image = self.project.model.images[img_index]
+        img_idx, _ = self.image_tree.get_selected_tuple()
+        image = self.project.model.images[img_idx]
         image.annotations.append(new_anno)
         diff = ChangeDiff()
         diff.annotation = new_anno
