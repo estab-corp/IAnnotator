@@ -14,6 +14,11 @@ from annotator.inspector import AnnotationsInspector
 from annotator.inspector_interface import ChangeReason, ChangeDiff
 
 
+class CopyPasteBuffer:
+    def __init__(self, annotation: Model.Image.Annotation):
+        self.annotation = annotation
+
+
 class AnnotatorWindow(tk.Tk):
     def __init__(self, project: Project, **kwargs):
         super().__init__(**kwargs)
@@ -25,6 +30,7 @@ class AnnotatorWindow(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.createcommand("tk::mac::Quit", self.on_closing)
         self.focus_force()
+        self._copy_buffer: Optional[CopyPasteBuffer] = None
 
     def on_closing(self, _=None):
         if not self.project.dirty or messagebox.askokcancel("Quit", "Unsaved changes, do you want to quit?"):
@@ -68,6 +74,7 @@ class AnnotatorWindow(tk.Tk):
         self.edit_menu.add_command(
             label="Paste", command=self.cmd_paste, accelerator="Command+v")
         self.bind_all("<Command-v>", self.cmd_paste)
+        self.edit_menu.entryconfig("Paste", state='disabled')
         self.edit_menu.add_command(
             label="Duplicate", command=self.duplicate, accelerator="Command+D")
         self.bind_all("<Command-d>", self.duplicate)
@@ -181,6 +188,7 @@ class AnnotatorWindow(tk.Tk):
         self.canvas.draw_annotations()
         img_index = self.image_tree.get_selected_image_index()
         self.inspector.update_inspector(self.project.model.images[img_index])
+        self.image_tree.update_image_list(self.project.model)
         self.edit_menu.entryconfig("Redo", state='active')
         if self.undo_manager.num_prev_commands() == 0:
             self.edit_menu.entryconfig("Undo", state='disabled')
@@ -190,6 +198,7 @@ class AnnotatorWindow(tk.Tk):
         self.canvas.draw_annotations()
         img_index = self.image_tree.get_selected_image_index()
         self.inspector.update_inspector(self.project.model.images[img_index])
+        self.image_tree.update_image_list(self.project.model)
         self.edit_menu.entryconfig("Undo", state='active')
         if self.undo_manager.num_next_commands() == 0:
             self.edit_menu.entryconfig("Redo", state='disabled')
@@ -209,15 +218,43 @@ class AnnotatorWindow(tk.Tk):
             new_index, reason=ChangeReason.ANNO_ADDED, diff=diff)
         self.annotations_selection_changed(new_index)
 
+    def remove_selected_anno(self):
+        img_idx, anno_idx = self.image_tree.get_selected_tuple()
+        delete_anno = self.project.model.images[img_idx].annotations[anno_idx]
+        del self.project.model.images[img_idx].annotations[anno_idx]
+
+        diff = ChangeDiff()
+        diff.annotation = delete_anno
+        self.annotations_changed(
+            anno_idx, reason=ChangeReason.ANNO_DELETED, diff=diff)
+
     def cmd_cut(self, _=None):
-        print("cut")
+        img_idx, anno_idx = self.image_tree.get_selected_tuple()
+        print(f"Cut img_idx={img_idx} anno_idx={anno_idx}")
+        self._copy_buffer = CopyPasteBuffer(
+            self.project.model.images[img_idx].annotations[anno_idx])
+        self.edit_menu.entryconfig("Paste", state='active')
+        self.remove_selected_anno()
 
     def cmd_copy(self, _=None):
         img_idx, anno_idx = self.image_tree.get_selected_tuple()
-        print(f"Copy img_idx={img_idx} anno_idx={anno_idx}")
+        self._copy_buffer = CopyPasteBuffer(
+            self.project.model.images[img_idx].annotations[anno_idx])
+        self.edit_menu.entryconfig("Paste", state='active')
 
     def cmd_paste(self, _=None):
-        print("paste")
+        if self._copy_buffer is None:
+            return
+        new_anno = self._copy_buffer.annotation.copy()
+        img_index = self.image_tree.get_selected_image_index()
+        image = self.project.model.images[img_index]
+        image.annotations.append(new_anno)
+        diff = ChangeDiff()
+        diff.annotation = new_anno
+        new_index = len(image.annotations)-1
+        self.annotations_changed(
+            new_index, reason=ChangeReason.ANNO_ADDED, diff=diff)
+        self.annotations_selection_changed(new_index)
 
     def add_new_image(self, _=None):
         filenames = filedialog.askopenfilenames(

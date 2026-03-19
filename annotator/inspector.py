@@ -186,14 +186,12 @@ class AnnotationsInspector(tk.Frame):
         self.update_annotation(index)
 
     def update_annotation(self, index: int):
-        if index == -1:
+        if index == -1 or self.current_image is None or index >= len(self.current_image.annotations):
             self.x_val.set(0)
             self.y_val.set(0)
             self.w_val.set(0)
             self.h_val.set(0)
             self.lbl_val.set("")
-            return
-        if self.current_image is None:
             return
         self.x_val.set(self.current_image.annotations[index].x)
         self.y_val.set(self.current_image.annotations[index].y)
