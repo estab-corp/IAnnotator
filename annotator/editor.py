@@ -21,7 +21,6 @@ class CopyPasteBuffer:
 class AnnotatorWindow(tk.Tk):
     def __init__(self, project: Project, **kwargs):
         super().__init__(**kwargs)
-        self.undo_manager = UndoManager()
         self.project = project
         self.title(f"Model Annotator file {self.project.folder}")
         self._setup_ui()
@@ -167,7 +166,7 @@ class AnnotatorWindow(tk.Tk):
         if commit:
             was_clean = self.project.dirty is False
             self.project.dirty = True
-            self.undo_manager.push_change(UndoManager.Command(
+            self.project.undo_manager.push_change(UndoManager.Command(
                 reason,
                 img_index=current_selected_image,
                 anno_index=index,
@@ -179,27 +178,27 @@ class AnnotatorWindow(tk.Tk):
         self.inspector.mouse_pos_changed(coords)
 
     def undo(self, _=None):
-        if self.undo_manager.num_prev_commands() == 0:
+        if self.project.undo_manager.num_prev_commands() == 0:
             self.edit_menu.entryconfig("Undo", state='disabled')
             return
-        if self.undo_manager.undo(self.project.model):
+        if self.project.undo_manager.undo(self.project.model):
             self.project.dirty = False
         self.canvas.draw_annotations()
         img_index = self.image_tree.get_selected_image_index()
         self.inspector.update_inspector(self.project.model.images[img_index])
         self.image_tree.update_image_list(self.project.model)
         self.edit_menu.entryconfig("Redo", state='active')
-        if self.undo_manager.num_prev_commands() == 0:
+        if self.project.undo_manager.num_prev_commands() == 0:
             self.edit_menu.entryconfig("Undo", state='disabled')
 
     def redo(self, _=None):
-        self.undo_manager.redo(self.project.model)
+        self.project.undo_manager.redo(self.project.model)
         self.canvas.draw_annotations()
         img_index = self.image_tree.get_selected_image_index()
         self.inspector.update_inspector(self.project.model.images[img_index])
         self.image_tree.update_image_list(self.project.model)
         self.edit_menu.entryconfig("Undo", state='active')
-        if self.undo_manager.num_next_commands() == 0:
+        if self.project.undo_manager.num_next_commands() == 0:
             self.edit_menu.entryconfig("Redo", state='disabled')
 
     def duplicate(self, _=None):

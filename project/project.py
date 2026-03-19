@@ -1,4 +1,5 @@
 from project.model import Model
+from project.undo_manager import UndoManager, ChangeDiff, ChangeReason
 from formats import export_to
 
 
@@ -9,6 +10,7 @@ class Project:
         self.folder: str = ""
         self.model = model
         self.dirty = False
+        self.undo_manager = UndoManager()
 
     def get_image_path(self, index: int):
         prefix = self.folder
