@@ -200,8 +200,10 @@ class AnnotationsInspector(tk.Frame):
         self.lbl_val.set(self.current_image.annotations[index].label)
 
     def add_new(self):
-        assert (self.current_image)
-        self.project.add_annotation(img_idx=self.current_img_idx)
+        if self.current_image is None:
+            return
+        self.project.add_annotation(
+            img_idx=self.current_img_idx, annotation=Model.Image.Annotation())
         new_index = len(self.current_image.annotations)-1
         self.do_select_annotation(new_index)
 

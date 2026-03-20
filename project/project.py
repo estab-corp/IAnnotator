@@ -65,7 +65,7 @@ class Project:
                      img_idx=img_idx, anno_idx=anno_idx, diff=None)
         self._notify_annotation_list_changed(img_idx)
 
-    def add_annotation(self, img_idx: int, annotation: Model.Image.Annotation = Model.Image.Annotation()):
+    def add_annotation(self, img_idx: int, annotation: Model.Image.Annotation):
         image = self.model.images[img_idx]
         image.annotations.append(annotation)
 
