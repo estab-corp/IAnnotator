@@ -20,6 +20,10 @@ class CanvasWatcher(ABC):
     def annotation_is_changing(self, img_idx: int, anno_idx: int):
         pass
 
+    @abstractmethod
+    def canvas_selection_changed(self, anno_idx: int):
+        pass
+
 
 class CanvasImage(tk.Canvas):
     def __init__(self, project: Project, watcher: CanvasWatcher, master: tk.Tk, **kwargs):
@@ -126,6 +130,7 @@ class CanvasImage(tk.Canvas):
             return
         mdl_img = self.project.model.images[self.img_idx]
         assert mdl_img
+        prev_selected_annotation_idx = self.selected_annotation_idx
         self.selected_annotation_idx = -1
         img_event_coords = self.coords_view_to_img((event.x, event.y))
         for a_id, annotation in enumerate(mdl_img.annotations):
@@ -155,6 +160,8 @@ class CanvasImage(tk.Canvas):
                 break
         if self.selected_annotation_idx == -1:
             return
+        if prev_selected_annotation_idx != self.selected_annotation_idx:
+            self.watcher.canvas_selection_changed(self.selected_annotation_idx)
         annotation = mdl_img.annotations[self.selected_annotation_idx]
         self.start_move_w = annotation.width
         self.start_move_h = annotation.height
@@ -202,8 +209,6 @@ class CanvasImage(tk.Canvas):
         self.source_image = PIL.Image.open(filename)
         assert self.source_image
         self.image = ImageTk.PhotoImage(self.source_image)
-        if len(image.annotations) > 0:
-            self.selected_annotation_idx = 0
         self.resize_image()
         self.render_image()
         self.draw_annotations()

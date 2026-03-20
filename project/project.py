@@ -78,7 +78,10 @@ class Project:
 
     def duplicate_annotation(self, img_idx: int, anno_idx: int):
         image = self.model.images[img_idx]
-        self.add_annotation(img_idx, image.annotations[anno_idx].copy())
+        image_copy = image.annotations[anno_idx].copy()
+        image_copy.x += 30
+        image_copy.y += 30
+        self.add_annotation(img_idx, image_copy)
 
     def update_annotation(self, img_idx: int, anno_idx: int, reason: ChangeReason, diff: Optional[ChangeDiff]):
         self._commit(reason=reason, img_idx=img_idx,

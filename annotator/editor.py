@@ -9,7 +9,7 @@ from project.project import Project, ProjectWatcher
 from project.model import Model
 from project.undo_manager import UndoManager, ChangeReason, ChangeDiff
 from annotator.image_tree_widget import ImageTreeWidget
-from annotator.canvas import CanvasImage
+from annotator.canvas import CanvasImage, CanvasWatcher
 from annotator.inspector import AnnotationsInspector
 
 
@@ -18,7 +18,7 @@ class CopyPasteBuffer:
         self.annotation = annotation
 
 
-class AnnotatorWindow(tk.Tk, ProjectWatcher):
+class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
     def __init__(self, project: Project, **kwargs):
         super().__init__(**kwargs)
         self.project = project
@@ -31,11 +31,32 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher):
         self.focus_force()
         self._copy_buffer: Optional[CopyPasteBuffer] = None
 
-    def on_closing(self, _=None):
-        if not self.project.dirty or messagebox.askokcancel("Quit", "Unsaved changes, do you want to quit?"):
-            self.destroy()
-            return
-        self.focus_force()
+    def _setup_ui(self):
+        self.geometry(
+            f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}")
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        center = tk.Frame(self, bg='gray2', width=50,
+                          height=40, padx=3, pady=3)
+        center.grid(row=1, sticky="nsew")
+        center.grid_rowconfigure(0, weight=1)
+        center.grid_columnconfigure(1, weight=1)
+
+        self.left_panel = tk.Frame(center, bg='blue', width=200, height=190)
+        self.inspector = AnnotationsInspector(project=self.project, master=center, bg='green', width=100,
+                                              height=190, padx=3, pady=3)
+        self.inspector.update_classes_list(self.project.model)
+        self.left_panel.grid(row=0, column=0, sticky="ns")
+        self.inspector.grid(row=0, column=2, sticky="ns")
+
+        self.canvas = CanvasImage(
+            project=self.project, watcher=self, master=center, bd=2)
+        self.canvas.grid(row=0, column=1, sticky="nsew")
+        self.image_tree = ImageTreeWidget(self.left_panel)
+        self.image_tree.pack(expand=True, fill='y')
+        self.image_tree.bind("<<TreeviewSelect>>", self.img_selection_changed)
+        self.image_tree.update_image_list(self.project.model)
 
     def _setup_menu_bar(self):
         menu_bar = tk.Menu(self)
@@ -88,6 +109,12 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher):
 
         self.config(menu=menu_bar)
 
+    def on_closing(self, _=None):
+        if not self.project.dirty or messagebox.askokcancel("Quit", "Unsaved changes, do you want to quit?"):
+            self.destroy()
+            return
+        self.focus_force()
+
     def save(self, _=None):
         if self.project.json_file == "":
             filename = filedialog.asksaveasfilename(title="Save project as")
@@ -107,33 +134,6 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher):
         if filename == "":
             return
         self.project.save_as_file(filename, format_)
-
-    def _setup_ui(self):
-        self.geometry(
-            f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}")
-        self.grid_rowconfigure(1, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-
-        center = tk.Frame(self, bg='gray2', width=50,
-                          height=40, padx=3, pady=3)
-        center.grid(row=1, sticky="nsew")
-        center.grid_rowconfigure(0, weight=1)
-        center.grid_columnconfigure(1, weight=1)
-
-        self.left_panel = tk.Frame(center, bg='blue', width=200, height=190)
-        self.inspector = AnnotationsInspector(project=self.project, master=center, bg='green', width=100,
-                                              height=190, padx=3, pady=3)
-        self.inspector.update_classes_list(self.project.model)
-        self.left_panel.grid(row=0, column=0, sticky="ns")
-        self.inspector.grid(row=0, column=2, sticky="ns")
-
-        self.canvas = CanvasImage(
-            project=self.project, watcher=self.inspector, master=center, bd=2)
-        self.canvas.grid(row=0, column=1, sticky="nsew")
-        self.image_tree = ImageTreeWidget(self.left_panel)
-        self.image_tree.pack(expand=True, fill='y')
-        self.image_tree.bind("<<TreeviewSelect>>", self.img_selection_changed)
-        self.image_tree.update_image_list(self.project.model)
 
     def img_selection_changed(self, _):
         sel_img_index, sel_anno_index = self.image_tree.get_selected_tuple()
@@ -163,6 +163,16 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher):
         self.canvas.draw_annotations()
         self.inspector.update_classes_list(self.project.model)
         self.image_tree.update_image_list(self.project.model)
+
+    def canvas_selection_changed(self, anno_idx: int):
+        print(f"canvas_selection_changed anno_idx={anno_idx}")
+        self.image_tree.update_selected_annotation(anno_idx)
+
+    def mouse_pos_changed(self, coords: Tuple[int, int]):
+        self.inspector.mouse_pos_changed(coords)
+
+    def annotation_is_changing(self, img_idx: int, anno_idx: int):
+        self.inspector.annotation_is_changing(img_idx, anno_idx)
 
     def annotations_changed(self, index: int,  reason: ChangeReason, commit: bool = True, diff: Optional[ChangeDiff] = None):
         self.inspector.update_annotation(index)

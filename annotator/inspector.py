@@ -3,7 +3,6 @@ from typing import Optional, Tuple, Set, Callable
 from project.model import Model
 from project.project import Project
 from project.undo_manager import ChangeReason, ChangeDiff
-from annotator.canvas import CanvasWatcher
 SPIN_BOX_INCREMENT = 1
 
 
@@ -29,7 +28,7 @@ class ClassListOptionMenu(tk.OptionMenu):
                              command=lambda value=string: self.om_variable.set(value))
 
 
-class AnnotationsInspector(tk.Frame, CanvasWatcher):
+class AnnotationsInspector(tk.Frame):
     def __init__(self, project: Project, master: tk.Tk, **kwargs):
         super().__init__(master, **kwargs)
         self.project = project
