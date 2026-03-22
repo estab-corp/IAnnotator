@@ -4,7 +4,7 @@ Image annotator tool. This editor helps easily creating object-detector datasets
 
 ## Features
 
-- Add object annotations using bounding box,
+- Full WYSIWYG editor, move/resize, copy/paste annotations. Undo/Redo support.
 - Import/Export/Convert coreml, coco and csv formats
 
 ## Supported annotation formats
