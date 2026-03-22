@@ -36,7 +36,8 @@ class CanvasImage(tk.Canvas):
         self.image = None
         self.selected_annotation_idx = -1
         self.img_idx = -1
-        self.move_origin_offset = (0, 0)
+        self.move_origin_offset_screen = (0, 0)
+        self.move_origin_offset_img = (0, 0)
         # this stores the starting drag  X position in image coords
         self.start_move_x = 0
         # this stores the starting drag Y position in image coords
@@ -89,9 +90,9 @@ class CanvasImage(tk.Canvas):
             annotation.height = round(coords_in_img[1]-annotation.y, 2)
         else:
             annotation.x = round(
-                coords_in_img[0] - self.move_origin_offset[0], 2)
+                coords_in_img[0] - self.move_origin_offset_img[0], 2)
             annotation.y = round(
-                coords_in_img[1] - self.move_origin_offset[1], 2)
+                coords_in_img[1] - self.move_origin_offset_img[1], 2)
 
     def on_mouse_drag(self, event):
         self.is_dragging = True
@@ -103,7 +104,12 @@ class CanvasImage(tk.Canvas):
             return
         self._calc_new_rect(coords_in_img)
         self.draw_annotations()
-        self.draw_rulers((event.x, event.y))
+
+        rulers_pos = (
+            event.x-self.move_origin_offset_screen[0], event.y - self.move_origin_offset_screen[1])
+        if self.is_resizing:
+            rulers_pos = (event.x, event.y)
+        self.draw_rulers(rulers_pos)
         self.watcher.annotation_is_changing(
             self.img_idx, anno_idx=self.selected_annotation_idx)
 
@@ -151,12 +157,13 @@ class CanvasImage(tk.Canvas):
                 self.selected_annotation_idx = a_id
                 self.is_resizing = False
 
-                self.move_origin_offset = (
+                self.move_origin_offset_screen = (event.x-x, event.y-y)
+                self.move_origin_offset_img = (
                     img_event_coords[0] - annotation.x, img_event_coords[1] - annotation.y)
                 self.start_move_x = round(
-                    img_event_coords[0] - self.move_origin_offset[0], 2)
+                    img_event_coords[0] - self.move_origin_offset_img[0], 2)
                 self.start_move_y = round(
-                    img_event_coords[1] - self.move_origin_offset[1], 2)
+                    img_event_coords[1] - self.move_origin_offset_img[1], 2)
                 break
         if self.selected_annotation_idx == -1:
             return
