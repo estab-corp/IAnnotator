@@ -244,6 +244,8 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         if self._copy_buffer is None:
             return
         new_anno = self._copy_buffer.annotation.copy()
+        new_anno.x += 30
+        new_anno.y += 30
         img_idx, _ = self.image_tree.get_selected_tuple()
         image = self.project.model.images[img_idx]
         image.annotations.append(new_anno)
