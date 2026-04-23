@@ -221,6 +221,9 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         img_idx, _ = self.image_tree.get_selected_tuple()
         anno_index = self.inspector.current_annotation_index
         self.project.duplicate_annotation(img_idx=img_idx, anno_idx=anno_index)
+        image = self.project.model.images[img_idx]
+        new_index = len(image.annotations)-1
+        self.annotations_selection_changed(new_index)
 
     def remove_selected_anno(self):
         img_idx, anno_idx = self.image_tree.get_selected_tuple()
