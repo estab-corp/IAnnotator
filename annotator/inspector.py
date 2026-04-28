@@ -202,8 +202,14 @@ class AnnotationsInspector(tk.Frame):
     def add_new(self):
         if self.current_image is None:
             return
+        anno = Model.Image.Annotation()
+        anno.x = 100
+        anno.y = 200
+        anno.width = 300
+        anno.height = 400
+        anno.label = "label"
         self.project.add_annotation(
-            img_idx=self.current_img_idx, annotation=Model.Image.Annotation())
+            img_idx=self.current_img_idx, annotation=anno)
         new_index = len(self.current_image.annotations)-1
         self.do_select_annotation(new_index)
 

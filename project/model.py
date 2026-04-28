@@ -6,11 +6,11 @@ class Model:
     class Image:
         class Annotation:
             def __init__(self):
-                self.label: str = "LABEL"
-                self.width = 100
-                self.height = 200
-                self.x = 300
-                self.y = 400
+                self.label: str = ""
+                self.width: int = 0
+                self.height: int = 0
+                self.x: int = 0
+                self.y: int = 0
 
             def copy(self) -> 'Model.Image.Annotation':
                 return copy.deepcopy(self)
