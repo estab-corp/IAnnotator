@@ -43,7 +43,6 @@ class CoreMLHandler(AbstractFormatHandler):
         return ret
 
     def read(self, file: IO) -> Optional[Model]:
-        print("DO read coreml")
         data = json.load(fp=file)
         model = Model()
         for entry in data:

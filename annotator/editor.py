@@ -134,13 +134,11 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.focus_force()
 
     def open(self, _=None):
-        print("open")
         filename = filedialog.askopenfilename(
             title="New project", initialdir=self.project.get_folder())
         self.focus_force()
         if len(filename) == 0:
             return
-        print(filename)
         with open(filename, encoding="utf-8") as file:
             model, fmt = Model.load(file, in_format=None)
             if model is None:
@@ -179,7 +177,6 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.project.save_file()
 
     def save_as(self, format_: str):
-        print("save as ", format_)
         filename = filedialog.asksaveasfilename(
             title=f"Save project using {format_}",
             initialdir=self.project.get_folder(),
@@ -215,7 +212,6 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.image_tree.update_selected_annotation(index)
 
     def annotation_list_changed(self, img_index: int):
-        print(f"Editor.Watcher.annotation_list_changed img_index={img_index}")
         _, anno_idx = self.image_tree.get_selected_tuple()
         self.inspector.update_annotation(anno_idx)
         self.canvas.draw_annotations()
@@ -223,7 +219,6 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.image_tree.update_image_list(self.project.model)
 
     def canvas_selection_changed(self, anno_idx: int):
-        print(f"canvas_selection_changed anno_idx={anno_idx}")
         self.image_tree.update_selected_annotation(anno_idx)
 
     def mouse_pos_changed(self, coords: Tuple[int, int]):
@@ -289,7 +284,6 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
 
     def cmd_cut(self, _=None):
         img_idx, anno_idx = self.image_tree.get_selected_tuple()
-        print(f"Cut img_idx={img_idx} anno_idx={anno_idx}")
         self._copy_buffer = CopyPasteBuffer(
             self.project.model.images[img_idx].annotations[anno_idx])
         self.edit_menu.entryconfig("Paste", state='active')
@@ -323,10 +317,8 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.focus_force()
         if len(filenames) == 0:
             return
-        print(f"add image filefilenames={filenames}")
         for filepath in filenames:
             p = os.path.relpath(filepath, self.project.get_folder())
-            print(p)
             new_img = Model.Image()
             new_img.filename = p
             self.project.model.images.append(new_img)

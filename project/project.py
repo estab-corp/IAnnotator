@@ -28,11 +28,8 @@ class Project:
         self.watchers: List[ProjectWatcher] = []
 
     def get_folder(self) -> str:
-        print(f"self.json_file='{self.json_file}'")
         if self.json_file != "":
-            ret = os.path.dirname(os.path.abspath(self.json_file))
-            print(f"dirname:'{self.json_file}'")
-            return ret
+            return os.path.dirname(os.path.abspath(self.json_file))
         return os.getcwd()
 
     def _notify_annotation_list_changed(self, img_index: int):
@@ -40,9 +37,7 @@ class Project:
             w.annotation_list_changed(img_index)
 
     def get_image_path(self, index: int):
-        ret = self.get_folder() + "/" + self.model.images[index].filename
-        print(ret)
-        return ret
+        return self.get_folder() + "/" + self.model.images[index].filename
 
     def save_file(self):
         if export_to(self.default_format, self.model, self.json_file):
