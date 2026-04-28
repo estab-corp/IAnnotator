@@ -2,7 +2,6 @@ import tkinter as tk
 from typing import Tuple, Optional
 import PIL.Image
 from PIL import ImageTk
-from project.model import Model
 from project.project import Project
 from project.undo_manager import ChangeReason, ChangeDiff
 from abc import ABC, abstractmethod

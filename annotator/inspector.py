@@ -3,6 +3,7 @@ from typing import Optional, Tuple, Set, Callable
 from project.model import Model
 from project.project import Project
 from project.undo_manager import ChangeReason, ChangeDiff
+
 SPIN_BOX_INCREMENT = 1
 
 
