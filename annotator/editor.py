@@ -103,8 +103,8 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         # Images Menu
         images_menu = tk.Menu(menu_bar, tearoff=0)
         images_menu.add_command(
-            label="New Image", command=self.add_new_image, accelerator="Command+n")
-        self.bind_all("<Command-n>", self.add_new_image)
+            label="New Image", command=self.add_new_image, accelerator="Command+i")
+        self.bind_all("<Command-i>", self.add_new_image)
         menu_bar.add_cascade(label="Images", menu=images_menu)
 
         self.config(menu=menu_bar)
