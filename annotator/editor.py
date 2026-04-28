@@ -23,13 +23,20 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         super().__init__(**kwargs)
         self.project = project
         self.project.watchers.append(self)
-        self.title(f"Model Annotator file '{self.project.json_file}'")
+
         self._setup_ui()
         self._setup_menu_bar()
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.createcommand("tk::mac::Quit", self.on_closing)
+        self.update_title()
         self.focus_force()
         self._copy_buffer: Optional[CopyPasteBuffer] = None
+
+    def update_title(self):
+        file_name = self.project.json_file
+        if file_name == "":
+            file_name = "untitled"
+        self.title(f"Model Annotator file '{file_name}'")
 
     def _setup_ui(self):
         self.geometry(
@@ -131,7 +138,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         file_name = self.project.json_file
         if file_name == "":
             file_name = "untitled"
-        self.title(f"Model Annotator file '{file_name}'")
+        self.update_title()
 
     def save(self, _=None):
         if self.project.json_file == "":
@@ -140,7 +147,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
             if filename == "":
                 return
             self.project.json_file = filename
-        self.title(f"Model Annotator file '{self.project.json_file}'")
+        self.update_title()
         self.project.save_file()
 
     def save_as(self, format_: str):
