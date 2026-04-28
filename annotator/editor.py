@@ -63,6 +63,11 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
 
         # file Menu
         file_menu = tk.Menu(menu_bar, tearoff=0)
+
+        file_menu.add_command(
+            label="New", command=self.new, accelerator="Command+n")
+        self.bind_all("<Command-n>", self.new)
+
         file_menu.add_command(
             label="Save", command=self.save, accelerator="Command+s")
         self.bind_all("<Command-s>", self.save)
@@ -115,6 +120,15 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
             return
         self.focus_force()
 
+    def new(self, _=None):
+        self.project = Project.new_default()
+        self.project.watchers.append(self)
+        self.image_tree.reset()
+        self.canvas.project = self.project
+        self.inspector.project = self.project
+        self.inspector.reset()
+        self.canvas.reset()
+
     def save(self, _=None):
         if self.project.json_file == "":
             filename = filedialog.asksaveasfilename(title="Save project as")
@@ -137,6 +151,9 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
 
     def img_selection_changed(self, _):
         sel_img_index, sel_anno_index = self.image_tree.get_selected_tuple()
+        if sel_img_index == -1:
+            return
+
         img_path = self.project.get_image_path(sel_img_index)
         img_ok = self.canvas.show_image(
             img_path,  sel_img_index)

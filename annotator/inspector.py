@@ -19,6 +19,9 @@ class ClassListOptionMenu(tk.OptionMenu):
         if self.value_changed and len(self.om_variable.get()) > 0:
             self.value_changed(self.om_variable.get())
 
+    def reset(self):
+        self.update_list(set())
+
     def update_list(self, classes: Set[str]):
         self.classes = list(classes)
         menu = self["menu"]
@@ -67,7 +70,7 @@ class AnnotationsInspector(tk.Frame):
                    increment=SPIN_BOX_INCREMENT, command=self.h_changed).grid(row=5, column=1)
 
         tk.Label(self.annotations_frame, text="label: ").grid(row=6, column=0)
-        self.lbl_val = tk.StringVar(value="Label")
+        self.lbl_val = tk.StringVar(value="")
         self.label_entry = tk.Entry(
             self.annotations_frame, textvariable=self.lbl_val, )
         self.label_entry.grid(row=6, column=1)
@@ -84,12 +87,12 @@ class AnnotationsInspector(tk.Frame):
         self.img_info_frame = tk.LabelFrame(self, text="Image")
         self.img_info_frame.pack(padx=10, pady=10, fill="both")
 
-        self.img_size_val = tk.StringVar(value="w=? h=?")
+        self.img_size_val = tk.StringVar()
         label = tk.Label(self.img_info_frame,
                          textvariable=self.img_size_val)
         label.pack(padx=5, pady=5)
 
-        self.mouse_pos_val = tk.StringVar(value="x=? y=?")
+        self.mouse_pos_val = tk.StringVar()
         label = tk.Label(self.img_info_frame,
                          textvariable=self.mouse_pos_val)
         label.pack(padx=5, pady=5)
@@ -100,6 +103,18 @@ class AnnotationsInspector(tk.Frame):
         self.classes_listbox = tk.Listbox(
             self.class_info_frame, selectmode=tk.SINGLE, exportselection=False)
         self.classes_listbox.grid(row=1, column=1)
+        self.reset()
+
+    def reset(self):
+        self.mouse_pos_val.set(value="x=? y=?")
+        self.img_size_val.set(value="w=? h=?")
+        self.x_val.set(value=0)
+        self.y_val.set(value=0)
+        self.w_val.set(value=0)
+        self.h_val.set(value=0)
+        self.lbl_val.set(value="")
+        self.classes_option_menu.reset()
+        self.classes_listbox.delete(0, tk.END)
 
     def _has_image_and_annotation_selected(self) -> bool:
         return self.current_image is not None and self.current_annotation_index >= 0

@@ -24,6 +24,9 @@ class ImageTreeWidget(ttk.Treeview):
         super().__init__(parent)
         self.invalid_tag = self.tag_configure("error", foreground="red")
 
+    def reset(self):
+        self.delete(*self.get_children())
+
     def select_image_index(self, img_index: int):
         cur_img_index, _ = self.get_selected_tuple()
         if cur_img_index == img_index:

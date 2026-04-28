@@ -60,6 +60,13 @@ class CanvasImage(tk.Canvas):
         self.bind('<B1-Motion>', self.on_mouse_drag)
         self.bind('<Motion>', self.on_mouse_move)
 
+    def reset(self):
+        self.clear_annotations()
+        self.img_load_error = False
+        self.selected_annotation_idx = -1
+        self.is_resizing = False
+        self._delete_previous_image()
+
     def coords_view_to_img(self, coords) -> Tuple[float, float]:
         assert self.source_image
         x = self.canvasx(coords[0])
