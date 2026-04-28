@@ -74,7 +74,13 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         file_menu.add_command(
             label="New", command=self.new, accelerator="Command+n")
         self.bind_all("<Command-n>", self.new)
+        file_menu.add_separator()
 
+        file_menu.add_command(
+            label="Open", command=self.open, accelerator="Command+o")
+        self.bind_all("<Command-o>", self.open)
+
+        file_menu.add_separator()
         file_menu.add_command(
             label="Save", command=self.save, accelerator="Command+s")
         self.bind_all("<Command-s>", self.save)
@@ -127,8 +133,28 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
             return
         self.focus_force()
 
+    def open(self, _=None):
+        print("open")
+        filename = filedialog.askopenfilename(
+            title="New project", initialdir=self.project.get_folder())
+        self.focus_force()
+        if len(filename) == 0:
+            return
+        print(filename)
+        with open(filename, encoding="utf-8") as file:
+            model, fmt = Model.load(file, in_format=None)
+            if model is None:
+                return
+            project = Project(model)
+            project.default_format = fmt
+            project.json_file = filename
+            self.set_project(project)
+
     def new(self, _=None):
-        self.project = Project.new_default()
+        self.set_project(Project.new_default())
+
+    def set_project(self, project: Project):
+        self.project = project
         self.project.watchers.append(self)
         self.image_tree.reset()
         self.canvas.project = self.project
@@ -139,6 +165,8 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         if file_name == "":
             file_name = "untitled"
         self.update_title()
+        self.inspector.update_classes_list(self.project.model)
+        self.image_tree.update_image_list(self.project.model)
 
     def save(self, _=None):
         if self.project.json_file == "":

@@ -13,7 +13,6 @@ class ProjectWatcher(ABC):
 
 
 class Project:
-
     @staticmethod
     def new_default():
         p = Project(Model())

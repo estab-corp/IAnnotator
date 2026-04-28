@@ -42,7 +42,6 @@ if __name__ == '__main__':
         project = Project(model)
         project.default_format = fmt
         project.json_file = input_file_path
-
         if args.convert:
             print(
                 f"write document '{args.output}' using format '{args.convert}'")
@@ -50,7 +49,6 @@ if __name__ == '__main__':
             if not formats.export_to(args.convert, model, args.output):
                 print("Error")
                 sys.exit(1)
-
         else:
             window = AnnotatorWindow(project)
             window.mainloop()
