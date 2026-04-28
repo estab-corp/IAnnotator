@@ -134,6 +134,11 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.focus_force()
 
     def open(self, _=None):
+        if self.project.dirty:
+            if not messagebox.askokcancel("Quit", "Unsaved changes, do you want to open a new file?"):
+                self.focus_force()
+                return
+
         filename = filedialog.askopenfilename(
             title="New project", initialdir=self.project.get_folder())
         self.focus_force()
