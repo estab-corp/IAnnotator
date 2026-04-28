@@ -75,7 +75,7 @@ class CocoHandler(AbstractFormatHandler):
         ret = {}
         for img in model.images:
             for anno in img.annotations:
-                ret[anno.label] = len(ret)-1
+                ret[anno.label] = len(ret)
         return ret
 
     def _compute_images(self, model: Model) -> List:
