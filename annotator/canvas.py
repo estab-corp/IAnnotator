@@ -32,6 +32,7 @@ class CanvasImage(tk.Canvas):
         self.watcher = watcher
         self.ratio = 1
         self.source_image: Optional[PIL.Image.Image] = None
+        self.img_load_error = False
         self.image_id = None
         self.image = None
         self.selected_annotation_idx = -1
@@ -207,13 +208,22 @@ class CanvasImage(tk.Canvas):
     def render_image(self):
         self.image_id = self.create_image(0, 0, anchor="nw", image=self.image)
 
-    def show_image(self, filename: str, img_idx: int):
+    def show_image(self, filename: str, img_idx: int) -> bool:
         image = self.project.model.images[img_idx]
         self.img_idx = img_idx
         self.selected_annotation_idx = -1
         self.is_resizing = False
         self._delete_previous_image()
-        self.source_image = PIL.Image.open(filename)
+        try:
+            self.source_image = PIL.Image.open(filename)
+        except FileNotFoundError as e:
+            r_x0, r_y0 = self.coords_img_to_view((500, 500))
+            self.clear_annotations()
+            self.text_ids.append(self.create_text(
+                r_x0, r_y0, text=f"error {e}", fill='red'))
+            self.img_load_error = True
+            return False
+        self.img_load_error = False
         assert self.source_image
         self.image = ImageTk.PhotoImage(self.source_image)
         self.resize_image()
@@ -221,6 +231,7 @@ class CanvasImage(tk.Canvas):
         self.draw_annotations()
         image.loaded_width = self.source_image.size[0]
         image.loaded_height = self.source_image.size[1]
+        return True
 
     def draw_rulers(self, mouse_pos):
         self.delete("rulers")
@@ -230,10 +241,7 @@ class CanvasImage(tk.Canvas):
         self.create_line(0, mouse_pos[1], self.width,
                          mouse_pos[1], dash=(5, 5), fill=color, tags="rulers")
 
-    def draw_annotations(self):
-        mdl_img = self.project.model.images[self.img_idx]
-        assert mdl_img
-
+    def clear_annotations(self):
         for r_id in self.rect_ids:
             self.delete(r_id)
         for t_id in self.text_ids:
@@ -241,6 +249,17 @@ class CanvasImage(tk.Canvas):
 
         for h_id in self.handle_ids:
             self.delete(h_id)
+
+    def select_annotation(self, anno_index: int):
+        if self.img_load_error:
+            return
+        self.selected_annotation_idx = anno_index
+        self.draw_annotations()
+
+    def draw_annotations(self):
+        self.clear_annotations()
+        mdl_img = self.project.model.images[self.img_idx]
+        assert mdl_img
 
         self.rect_ids = []
         self.text_ids = []

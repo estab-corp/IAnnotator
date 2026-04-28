@@ -22,12 +22,18 @@ def _get_index_from_image_iid(item_iid: str):
 class ImageTreeWidget(ttk.Treeview):
     def __init__(self, parent):
         super().__init__(parent)
+        self.invalid_tag = self.tag_configure("error", foreground="red")
 
     def select_image_index(self, img_index: int):
         cur_img_index, _ = self.get_selected_tuple()
         if cur_img_index == img_index:
             return
         self.selection_set(f"I{img_index}")
+
+    def mark_invalid_img(self, img_index: int):
+        print(f"ImageTreeWidget.mark_invalid_img {img_index}")
+        img_item_index = f"I{img_index}"
+        self.item(img_item_index, tags="error")
 
     def update_selected_annotation(self, anno_index: int):
         img_index, cur_anno_index = self.get_selected_tuple()

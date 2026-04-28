@@ -138,8 +138,10 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
     def img_selection_changed(self, _):
         sel_img_index, sel_anno_index = self.image_tree.get_selected_tuple()
         img_path = self.project.get_image_path(sel_img_index)
-        self.canvas.show_image(
+        img_ok = self.canvas.show_image(
             img_path,  sel_img_index)
+        if img_ok is False:
+            self.image_tree.mark_invalid_img(sel_img_index)
         self.inspector.update_inspector_image(sel_img_index)
         if sel_anno_index != -1:
             self.annotations_selection_changed(sel_anno_index)
@@ -151,8 +153,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
 
     def annotations_selection_changed(self, index):
         self.inspector.do_select_annotation(index)
-        self.canvas.selected_annotation_idx = index
-        self.canvas.draw_annotations()
+        self.canvas.select_annotation(index)
         self.edit_menu.entryconfig("Duplicate", state='active')
         self.image_tree.update_selected_annotation(index)
 
