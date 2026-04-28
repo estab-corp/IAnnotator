@@ -23,7 +23,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         super().__init__(**kwargs)
         self.project = project
         self.project.watchers.append(self)
-        self.title(f"Model Annotator file {self.project.folder}")
+        self.title(f"Model Annotator file '{self.project.json_file}'")
         self._setup_ui()
         self._setup_menu_bar()
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -128,6 +128,10 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.inspector.project = self.project
         self.inspector.reset()
         self.canvas.reset()
+        file_name = self.project.json_file
+        if file_name == "":
+            file_name = "untitled"
+        self.title(f"Model Annotator file '{file_name}'")
 
     def save(self, _=None):
         if self.project.json_file == "":
@@ -136,13 +140,14 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
             if filename == "":
                 return
             self.project.json_file = filename
+        self.title(f"Model Annotator file '{self.project.json_file}'")
         self.project.save_file()
 
     def save_as(self, format_: str):
         print("save as ", format_)
         filename = filedialog.asksaveasfilename(
             title=f"Save project using {format_}",
-            initialdir=self.project.folder,
+            initialdir=self.project.get_folder(),
         )
         self.focus_force()
         if filename == "":
@@ -279,13 +284,13 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
 
     def add_new_image(self, _=None):
         filenames = filedialog.askopenfilenames(
-            title="Add new image", initialdir=self.project.folder)
+            title="Add new image", initialdir=self.project.get_folder())
         self.focus_force()
         if len(filenames) == 0:
             return
         print(f"add image filefilenames={filenames}")
         for filepath in filenames:
-            p = os.path.relpath(filepath, self.project.folder)
+            p = os.path.relpath(filepath, self.project.get_folder())
             print(p)
             new_img = Model.Image()
             new_img.filename = p

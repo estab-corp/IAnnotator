@@ -3,6 +3,7 @@ from project.undo_manager import UndoManager, ChangeDiff, ChangeReason
 from formats import export_to
 from abc import ABC, abstractmethod
 from typing import List, Optional
+import os
 
 
 class ProjectWatcher(ABC):
@@ -17,27 +18,32 @@ class Project:
     def new_default():
         p = Project(Model())
         p.default_format = "coco"
-        p.folder = "."
         return p
 
     def __init__(self, model: Model):
         self.default_format = "coreml"
         self.json_file: str = ""
-        self.folder: str = ""
         self.model = model
         self.dirty = False
         self.undo_manager = UndoManager()
         self.watchers: List[ProjectWatcher] = []
+
+    def get_folder(self) -> str:
+        print(f"self.json_file='{self.json_file}'")
+        if self.json_file != "":
+            ret = os.path.dirname(os.path.abspath(self.json_file))
+            print(f"dirname:'{self.json_file}'")
+            return ret
+        return os.getcwd()
 
     def _notify_annotation_list_changed(self, img_index: int):
         for w in self.watchers:
             w.annotation_list_changed(img_index)
 
     def get_image_path(self, index: int):
-        prefix = self.folder
-        if len(prefix) > 0:
-            prefix += "/"
-        return prefix + self.model.images[index].filename
+        ret = self.get_folder() + "/" + self.model.images[index].filename
+        print(ret)
+        return ret
 
     def save_file(self):
         if export_to(self.default_format, self.model, self.json_file):

@@ -22,12 +22,7 @@ class Model:
             self.loaded_height = 0
 
     def __init__(self):
-        self.json_file: str = ""
-        self.folder: str = ""
         self.images: List[Model.Image] = []
-
-    def get_image_path(self, index: int):
-        return self.folder + "/" + self.images[index].filename
 
     def get_classes(self) -> Set[str]:
         classes: Set[str] = set()

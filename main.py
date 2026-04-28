@@ -15,7 +15,6 @@ parser.add_argument('output', metavar="JSON file ouput file", nargs='?')
 parser.add_argument('--convert', help="convert to a different format")
 parser.add_argument('--list-formats', action="store_true",
                     help="list supported formats")
-parser.add_argument('--image-path', help="use a different path for images")
 
 
 def list_formats():
@@ -60,11 +59,8 @@ if __name__ == '__main__':
         if model is None:
             sys.exit(1)
         folder = os.path.dirname(input_file_path)
-        if args.image_path is not None:
-            folder = args.image_path
         project = Project(model)
         project.default_format = fmt
-        project.folder = folder
         project.json_file = input_file_path
 
         if args.convert:
