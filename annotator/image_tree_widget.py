@@ -34,7 +34,6 @@ class ImageTreeWidget(ttk.Treeview):
         self.selection_set(f"I{img_index}")
 
     def mark_invalid_img(self, img_index: int):
-        print(f"ImageTreeWidget.mark_invalid_img {img_index}")
         img_item_index = f"I{img_index}"
         self.item(img_item_index, tags="error")
 
