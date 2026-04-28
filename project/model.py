@@ -1,5 +1,6 @@
-from typing import List, Set
 import copy
+from typing import Optional, Tuple, IO, List, Set
+import formats
 
 
 class Model:
@@ -36,3 +37,20 @@ class Model:
         for img in self.images:
             count += len(img.annotations)
         return count
+
+    @staticmethod
+    def load(file: IO, in_format: Optional[str]) -> Tuple[Optional['Model'], str]:
+        if in_format is None:
+            for form in formats.available_formats():
+                file.seek(0)
+                print(f"tying format {form}")
+                try:
+                    model, _ = Model.load(file, form)
+                    return (model, form)
+                except Exception:
+                    pass
+            raise TypeError("unable to read file")
+
+        print(f"load document using format '{in_format}'")
+        model = formats.import_from(in_format, file)
+        return (model, in_format)

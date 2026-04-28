@@ -1,7 +1,5 @@
 import argparse
-import os
 import sys
-from typing import Optional, Tuple, IO
 from annotator.editor import AnnotatorWindow
 from project.project import Project
 import formats
@@ -22,23 +20,6 @@ def list_formats():
         print(form)
 
 
-def load_model(file: IO, in_format: Optional[str]) -> Tuple[Optional[Model], str]:
-    if in_format is None:
-        for form in formats.available_formats():
-            file.seek(0)
-            print(f"tying format {form}")
-            try:
-                model, _ = load_model(file, form)
-                return (model, form)
-            except Exception:
-                pass
-        raise TypeError("unable to read file")
-
-    print(f"load document using format '{in_format}'")
-    model = formats.import_from(in_format, file)
-    return (model, in_format)
-
-
 if __name__ == '__main__':
     args = parser.parse_args()
     if args.list_formats:
@@ -55,10 +36,9 @@ if __name__ == '__main__':
         sys.exit(1)
     input_file_path = args.input
     with open(input_file_path, encoding="utf-8") as file:
-        model, fmt = load_model(file, args.in_format)
+        model, fmt = Model.load(file, args.in_format)
         if model is None:
             sys.exit(1)
-        folder = os.path.dirname(input_file_path)
         project = Project(model)
         project.default_format = fmt
         project.json_file = input_file_path
