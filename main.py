@@ -46,9 +46,7 @@ if __name__ == '__main__':
         list_formats()
         sys.exit(0)
     if args.input is None:
-        project = Project(Model())
-        project.default_format = "coco"
-        project.folder = "."
+        project = Project.new_default()
         window = AnnotatorWindow(project)
         window.mainloop()
         sys.exit(1)

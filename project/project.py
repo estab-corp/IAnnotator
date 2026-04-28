@@ -12,6 +12,14 @@ class ProjectWatcher(ABC):
 
 
 class Project:
+
+    @staticmethod
+    def new_default():
+        p = Project(Model())
+        p.default_format = "coco"
+        p.folder = "."
+        return p
+
     def __init__(self, model: Model):
         self.default_format = "coreml"
         self.json_file: str = ""
