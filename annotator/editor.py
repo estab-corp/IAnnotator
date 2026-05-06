@@ -111,11 +111,9 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.edit_menu.add_command(
             label="Paste", command=self.cmd_paste, accelerator="Command+v")
         self.bind_all("<Command-v>", self.cmd_paste)
-        self.edit_menu.entryconfig("Paste", state='disabled')
         self.edit_menu.add_command(
             label="Duplicate", command=self.duplicate, accelerator="Command+D")
         self.bind_all("<Command-d>", self.duplicate)
-        self.edit_menu.entryconfig("Duplicate", state='disabled')
 
         # Images Menu
         images_menu = tk.Menu(menu_bar, tearoff=0)
@@ -125,6 +123,18 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         menu_bar.add_cascade(label="Images", menu=images_menu)
 
         self.config(menu=menu_bar)
+        self.enable_paste(False)
+        self.enable_copy_cut_duplicate(False)
+
+    def enable_paste(self, state: bool):
+        s = 'active' if state else 'disabled'
+        self.edit_menu.entryconfig("Paste", state=s)
+
+    def enable_copy_cut_duplicate(self, state: bool):
+        s = 'active' if state else 'disabled'
+        self.edit_menu.entryconfig("Cut", state=s)
+        self.edit_menu.entryconfig("Copy", state=s)
+        self.edit_menu.entryconfig("Duplicate", state=s)
 
     def on_closing(self, _=None):
         if self.ask_if_ok_to_loose_changes(is_quit=True):
@@ -220,10 +230,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         if sel_anno_index != -1:
             self.annotations_selection_changed(sel_anno_index)
         _, anno_idx = self.image_tree.get_selected_tuple()
-        copy_state = "active" if anno_idx != -1 else "disabled"
-        self.edit_menu.entryconfig("Duplicate", state=copy_state)
-        self.edit_menu.entryconfig("Cut", state=copy_state)
-        self.edit_menu.entryconfig("Copy", state=copy_state)
+        self.enable_copy_cut_duplicate(state=anno_idx != -1)
 
     def annotations_selection_changed(self, index):
         self.inspector.do_select_annotation(index)
@@ -306,14 +313,14 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         img_idx, anno_idx = self.image_tree.get_selected_tuple()
         self._copy_buffer = CopyPasteBuffer(
             self.project.model.images[img_idx].annotations[anno_idx])
-        self.edit_menu.entryconfig("Paste", state='active')
+        self.enable_paste(True)
         self.remove_selected_anno()
 
     def cmd_copy(self, _=None):
         img_idx, anno_idx = self.image_tree.get_selected_tuple()
         self._copy_buffer = CopyPasteBuffer(
             self.project.model.images[img_idx].annotations[anno_idx])
-        self.edit_menu.entryconfig("Paste", state='active')
+        self.enable_paste(True)
 
     def cmd_paste(self, _=None):
         if self._copy_buffer is None:
