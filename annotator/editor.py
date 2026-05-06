@@ -1,8 +1,7 @@
 import os
 import functools
-from tkinter import messagebox
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from typing import Tuple, Optional
 from formats import available_formats
 from project.project import Project, ProjectWatcher
@@ -145,13 +144,18 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         if len(filename) == 0:
             return
         with open(filename, encoding="utf-8") as file:
-            model, fmt = Model.load(file, in_format=None)
-            if model is None:
-                return
-            project = Project(model)
-            project.default_format = fmt
-            project.json_file = filename
-            self.set_project(project)
+            try:
+                model, fmt = Model.load(file, in_format=None)
+                if model is None:
+                    messagebox.showerror(
+                        title="Open error", message="unknown error")
+                    return
+                project = Project(model)
+                project.default_format = fmt
+                project.json_file = filename
+                self.set_project(project)
+            except TypeError as err:
+                messagebox.showerror(title="Open error", message=str(err))
 
     def new(self, _=None):
         self.set_project(Project.new_default())
