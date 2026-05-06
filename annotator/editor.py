@@ -127,16 +127,25 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.config(menu=menu_bar)
 
     def on_closing(self, _=None):
-        if not self.project.dirty or messagebox.askokcancel("Quit", "Unsaved changes, do you want to quit?"):
+        if self.ask_if_ok_to_loose_changes(is_quit=True):
             self.destroy()
-            return
+
+    def ask_if_ok_to_loose_changes(self, is_quit: bool = False) -> bool:
+        if self.project.dirty:
+            msg = "Unsaved changes, "
+            if is_quit:
+                msg += "do you want to quit?"
+            else:
+                msg += "do you want to open a new file?"
+            if not messagebox.askokcancel("Quit", msg):
+                self.focus_force()
+                return False
         self.focus_force()
+        return True
 
     def open(self, _=None):
-        if self.project.dirty:
-            if not messagebox.askokcancel("Quit", "Unsaved changes, do you want to open a new file?"):
-                self.focus_force()
-                return
+        if not self.ask_if_ok_to_loose_changes():
+            return
 
         filename = filedialog.askopenfilename(
             title="New project", initialdir=self.project.get_folder())
@@ -158,6 +167,8 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
                 messagebox.showerror(title="Open error", message=str(err))
 
     def new(self, _=None):
+        if not self.ask_if_ok_to_loose_changes():
+            return
         self.set_project(Project.new_default())
 
     def set_project(self, project: Project):
