@@ -361,7 +361,9 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
 
     def remove_selected_image(self, _=None):
         img_idx, _ = self.image_tree.get_selected_tuple()
-        print(f"remove image index {img_idx}")
+        assert img_idx != -1
+        self.project.remove_image(img_idx)
+        self.image_tree.update_image_list(self.project.model)
 
     def duplicate_selected_image(self, _=None):
         img_idx, _ = self.image_tree.get_selected_tuple()
@@ -379,6 +381,5 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         for filepath in filenames:
             p = os.path.relpath(filepath, self.project.get_folder())
             self.project.add_image(p)
-        self.project.dirty = True
         self.image_tree.update_image_list(self.project.model)
         self.image_tree.select_image_index(len(self.project.model.images)-1)

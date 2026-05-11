@@ -9,6 +9,7 @@ class ChangeReason(IntEnum):
     ANNO_ADDED = 2
     LABEL = 3
     IMG_ADDED = 4
+    IMG_DELETED = 5
 
 
 class ChangeDiff:
@@ -93,6 +94,10 @@ class CommandManager:
             assert cmd.diff.image
             print(f"remove img {cmd.img_index}")
             del model.images[cmd.img_index]
+        elif cmd.reason == ChangeReason.IMG_DELETED:
+            assert cmd.diff
+            assert cmd.diff.image
+            model.images.insert(cmd.img_index, cmd.diff.image)
         else:
             print(f"unhandled undo reason {cmd}")
             assert 0
@@ -131,6 +136,10 @@ class CommandManager:
             assert cmd.diff
             assert cmd.diff.image
             model.images.insert(cmd.img_index, cmd.diff.image)
+        elif cmd.reason == ChangeReason.IMG_DELETED:
+            assert cmd.diff
+            assert cmd.diff.image
+            del model.images[cmd.img_index]
         else:
             print(f"unhandled undo reason {cmd}")
             assert 0

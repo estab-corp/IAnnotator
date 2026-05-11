@@ -91,10 +91,16 @@ class Project:
         self.model.images.append(new_img)
         diff = ChangeDiff()
         diff.image = new_img
-
-        print(f"add image '{img_path}' at index {new_img_index}")
         self._commit(reason=ChangeReason.IMG_ADDED,
                      img_idx=new_img_index, anno_idx=-1, diff=diff)
+
+    def remove_image(self, img_idx: int):
+        deleted_image = self.model.images[img_idx]
+        del self.model.images[img_idx]
+        diff = ChangeDiff()
+        diff.image = deleted_image
+        self._commit(reason=ChangeReason.IMG_DELETED,
+                     img_idx=img_idx, anno_idx=-1, diff=diff)
 
     def duplicate_image(self, after_img_idx: int) -> int:
         new_image = self.model.images[after_img_idx].copy()
