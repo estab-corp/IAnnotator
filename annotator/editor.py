@@ -292,8 +292,10 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
             self.project.dirty = False
         self.image_tree.update_image_list(self.project.model)
         img_idx, _ = self.image_tree.get_selected_tuple()
-        self.inspector.update_inspector_image(img_idx)
-        self.inspector.update_classes_list(self.project.model)
+
+        if img_idx != -1:
+            self.inspector.update_inspector_image(img_idx)
+            self.inspector.update_classes_list(self.project.model)
         self.edit_menu.entryconfig("Redo", state='active')
         if self.project.undo_manager.num_prev_commands() == 0:
             self.edit_menu.entryconfig("Undo", state='disabled')
@@ -302,7 +304,8 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.project.undo_manager.redo(self.project.model)
         self.canvas.draw_annotations()
         img_idx, _ = self.image_tree.get_selected_tuple()
-        self.inspector.update_inspector_image(img_idx)
+        if img_idx != -1:
+            self.inspector.update_inspector_image(img_idx)
         self.inspector.update_classes_list(self.project.model)
         self.image_tree.update_image_list(self.project.model)
         self.edit_menu.entryconfig("Undo", state='active')
@@ -354,7 +357,6 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         img_idx, _ = self.image_tree.get_selected_tuple()
         assert img_idx != -1
         new_img_idx = self.project.duplicate_image(img_idx)
-        print(f"dup selected image {img_idx} -> {new_img_idx}")
         self.image_tree.update_image_list(self.project.model)
         self.image_tree.select_image_index(new_img_idx)
 
@@ -366,9 +368,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
             return
         for filepath in filenames:
             p = os.path.relpath(filepath, self.project.get_folder())
-            new_img = Model.Image()
-            new_img.filename = p
-            self.project.model.images.append(new_img)
+            self.project.add_image(p)
         self.project.dirty = True
         self.image_tree.update_image_list(self.project.model)
         self.image_tree.select_image_index(len(self.project.model.images)-1)

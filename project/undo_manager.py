@@ -91,6 +91,7 @@ class UndoManager:
         elif cmd.reason == ChangeReason.IMG_ADDED:
             assert cmd.diff
             assert cmd.diff.image
+            print(f"remove img {cmd.img_index}")
             del model.images[cmd.img_index]
         else:
             print(f"unhandled undo reason {cmd}")
