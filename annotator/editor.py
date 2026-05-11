@@ -125,10 +125,14 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
             label="Duplicate Selected", command=self.duplicate_selected_image, accelerator="Shift+Command+D")
         self.bind_all("<Shift-Command-D>", self.duplicate_selected_image)
 
+        self.images_menu.add_command(
+            label="Remove Selected", command=self.remove_selected_image)
+        # self.bind_all("<Shift-Command-D>", self.remove_selected_image)
+
         self.config(menu=menu_bar)
         self.enable_paste(False)
         self.enable_copy_cut_duplicate(False)
-        self.enable_duplicated_selected_image(False)
+        self.enable_duplicate_remove_selected_image(False)
 
     def enable_paste(self, state: bool):
         s = 'active' if state else 'disabled'
@@ -140,9 +144,10 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.edit_menu.entryconfig("Copy", state=s)
         self.edit_menu.entryconfig("Duplicate", state=s)
 
-    def enable_duplicated_selected_image(self, state: bool):
+    def enable_duplicate_remove_selected_image(self, state: bool):
         s = 'active' if state else 'disabled'
         self.images_menu.entryconfig("Duplicate Selected", state=s)
+        self.images_menu.entryconfig("Remove Selected", state=s)
 
     def on_closing(self, _=None):
         if self.ask_if_ok_to_loose_changes(is_quit=True):
@@ -203,7 +208,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.update_title()
         self.inspector.update_classes_list(self.project.model)
         self.image_tree.update_image_list(self.project.model)
-        self.enable_duplicated_selected_image(False)
+        self.enable_duplicate_remove_selected_image(False)
 
     def save(self, _=None):
         if self.project.json_file == "":
@@ -228,7 +233,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
     def img_selection_changed(self, _):
         sel_img_index, sel_anno_index = self.image_tree.get_selected_tuple()
         if sel_img_index == -1:
-            self.enable_duplicated_selected_image(False)
+            self.enable_duplicate_remove_selected_image(False)
             return
 
         img_path = self.project.get_image_path(sel_img_index)
@@ -241,9 +246,10 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
             self.annotations_selection_changed(sel_anno_index)
         _, anno_idx = self.image_tree.get_selected_tuple()
         self.enable_copy_cut_duplicate(state=anno_idx != -1)
-        self.enable_duplicated_selected_image(True)
+        self.enable_duplicate_remove_selected_image(True)
 
     def annotations_selection_changed(self, index):
+        assert index != -1
         self.inspector.do_select_annotation(index)
         self.canvas.select_annotation(index)
         self.edit_menu.entryconfig("Duplicate", state='active')
@@ -352,6 +358,10 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.annotations_changed(
             new_index, reason=ChangeReason.ANNO_ADDED, diff=diff)
         self.annotations_selection_changed(new_index)
+
+    def remove_selected_image(self, _=None):
+        img_idx, _ = self.image_tree.get_selected_tuple()
+        print(f"remove image index {img_idx}")
 
     def duplicate_selected_image(self, _=None):
         img_idx, _ = self.image_tree.get_selected_tuple()
