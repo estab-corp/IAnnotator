@@ -59,9 +59,15 @@ class ImageTreeWidget(ttk.Treeview):
     def _select_closest_img_anno(self, sel_img: int, sel_anno: int):
         if sel_img == -1:
             return
+
         # if sel_anno has disappeared, likely due to being removed,
         # we try and get the previous annotation index. If no lower index, selected the parent image
         img_item_index = f"I{sel_img}"
+
+        if not self.exists(img_item_index):
+            self._select_closest_img_anno(sel_img-1, sel_anno)
+            return
+
         self.item(img_item_index, open=True)
         anno_items = self.get_children(img_item_index)
 
@@ -100,5 +106,6 @@ class ImageTreeWidget(ttk.Treeview):
             return
 
         for item, is_open in open_states.items():
-            self.item(item, open=is_open)
+            if self.exists(item):
+                self.item(item, open=is_open)
         self._select_closest_img_anno(sel_img, sel_anno)

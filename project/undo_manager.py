@@ -8,6 +8,7 @@ class ChangeReason(IntEnum):
     ANNO_DELETED = 1
     ANNO_ADDED = 2
     LABEL = 3
+    IMG_ADDED = 4
 
 
 class ChangeDiff:
@@ -18,8 +19,10 @@ class ChangeDiff:
         self.h: Optional[int] = None
         self.prev_label: Optional[str] = None
         self.new_label: Optional[str] = None
-        # set when reason is Delete
+        # set when reason is annotation-related
         self.annotation: Optional[Model.Image.Annotation] = None
+        # set when reason is image-related
+        self.image: Optional[Model.Image] = None
 
     def __repr__(self) -> str:
         return f"dx={self.x} dy={self.y} dw={self.w} dh={self.h} label={self.prev_label}"
@@ -85,6 +88,10 @@ class UndoManager:
                 model.images[cmd.img_index].annotations[cmd.anno_index].width -= cmd.diff.w
             if cmd.diff.h:
                 model.images[cmd.img_index].annotations[cmd.anno_index].height -= cmd.diff.h
+        elif cmd.reason == ChangeReason.IMG_ADDED:
+            assert cmd.diff
+            assert cmd.diff.image
+            del model.images[cmd.img_index]
         else:
             print(f"unhandled undo reason {cmd}")
             assert 0
@@ -119,6 +126,10 @@ class UndoManager:
                 model.images[cmd.img_index].annotations[cmd.anno_index].width += cmd.diff.w
             if cmd.diff.h:
                 model.images[cmd.img_index].annotations[cmd.anno_index].height += cmd.diff.h
+        elif cmd.reason == ChangeReason.IMG_ADDED:
+            assert cmd.diff
+            assert cmd.diff.image
+            model.images.insert(cmd.img_index, cmd.diff.image)
         else:
             print(f"unhandled undo reason {cmd}")
             assert 0

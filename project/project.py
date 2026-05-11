@@ -84,6 +84,15 @@ class Project:
                      img_idx=img_idx, anno_idx=new_anno_index, diff=diff)
         self._notify_annotation_list_changed(img_idx)
 
+    def duplicate_image(self, after_img_idx: int) -> int:
+        new_image = self.model.images[after_img_idx].copy()
+        self.model.images.insert(after_img_idx+1, new_image)
+        diff = ChangeDiff()
+        diff.image = new_image
+        self._commit(reason=ChangeReason.IMG_ADDED,
+                     img_idx=after_img_idx+1, anno_idx=-1, diff=diff)
+        return after_img_idx+1
+
     def duplicate_annotation(self, img_idx: int, anno_idx: int):
         image = self.model.images[img_idx]
         image_copy = image.annotations[anno_idx].copy()

@@ -16,6 +16,9 @@ class Model:
             def copy(self) -> 'Model.Image.Annotation':
                 return copy.deepcopy(self)
 
+        def copy(self) -> 'Model.Image':
+            return copy.deepcopy(self)
+
         def __init__(self):
             self.annotations: List[Model.Image.Annotation] = []
             self.filename: str = ""
