@@ -70,7 +70,7 @@ class Project:
         diff.annotation = delete_anno
 
         self._commit(reason=ChangeReason.ANNO_DELETED,
-                     img_idx=img_idx, anno_idx=anno_idx, diff=None)
+                     img_idx=img_idx, anno_idx=anno_idx, diff=diff)
         self._notify_annotation_list_changed(img_idx)
 
     def add_annotation(self, img_idx: int, annotation: Model.Image.Annotation):
