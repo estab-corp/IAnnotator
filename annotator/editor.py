@@ -293,7 +293,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.image_tree.update_image_list(self.project.model)
         img_idx, _ = self.image_tree.get_selected_tuple()
         self.inspector.update_inspector_image(img_idx)
-
+        self.inspector.update_classes_list(self.project.model)
         self.edit_menu.entryconfig("Redo", state='active')
         if self.project.undo_manager.num_prev_commands() == 0:
             self.edit_menu.entryconfig("Undo", state='disabled')
@@ -303,6 +303,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.canvas.draw_annotations()
         img_idx, _ = self.image_tree.get_selected_tuple()
         self.inspector.update_inspector_image(img_idx)
+        self.inspector.update_classes_list(self.project.model)
         self.image_tree.update_image_list(self.project.model)
         self.edit_menu.entryconfig("Undo", state='active')
         if self.project.undo_manager.num_next_commands() == 0:
