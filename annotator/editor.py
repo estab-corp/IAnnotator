@@ -254,8 +254,8 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
     def annotation_is_changing(self, img_idx: int, anno_idx: int):
         self.inspector.annotation_is_changing(img_idx, anno_idx)
 
-    def annotations_changed(self, index: int,  reason: ChangeReason, commit: bool = True, diff: Optional[ChangeDiff] = None):
-        self.inspector.update_annotation(index)
+    def annotations_changed(self, anno_index: int,  reason: ChangeReason, commit: bool = True, diff: Optional[ChangeDiff] = None):
+        self.inspector.update_annotation(anno_index)
         self.canvas.draw_annotations()
         self.inspector.update_classes_list(self.project.model)
 
@@ -268,7 +268,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
             self.project.undo_manager.push_change(UndoManager.Command(
                 reason,
                 img_index=current_selected_image,
-                anno_index=index,
+                anno_index=anno_index,
                 diff=diff), mark_dirty=was_clean)
             self.edit_menu.entryconfig("Undo", state='active')
             self.edit_menu.entryconfig("Redo", state='disabled')
