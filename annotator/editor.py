@@ -112,8 +112,8 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
             label="Paste", command=self.cmd_paste, accelerator="Command+v")
         self.bind_all("<Command-v>", self.cmd_paste)
         self.edit_menu.add_command(
-            label="Duplicate", command=self.duplicate, accelerator="Command+D")
-        self.bind_all("<Command-d>", self.duplicate)
+            label="Duplicate", command=self.duplicate_annotation, accelerator="Command+D")
+        self.bind_all("<Command-d>", self.duplicate_annotation)
 
         # Images Menu
         images_menu = tk.Menu(menu_bar, tearoff=0)
@@ -297,7 +297,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         if self.project.undo_manager.num_next_commands() == 0:
             self.edit_menu.entryconfig("Redo", state='disabled')
 
-    def duplicate(self, _=None):
+    def duplicate_annotation(self, _=None):
         img_idx, _ = self.image_tree.get_selected_tuple()
         anno_index = self.inspector.current_annotation_index
         self.project.duplicate_annotation(img_idx=img_idx, anno_idx=anno_index)
