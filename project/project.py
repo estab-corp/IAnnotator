@@ -11,6 +11,10 @@ class ProjectWatcher(ABC):
     def annotation_list_changed(self, img_index: int):
         pass
 
+    @abstractmethod
+    def model_changed(self):
+        pass
+
 
 class Project:
     @staticmethod
@@ -56,11 +60,13 @@ class Project:
     def _commit(self, reason: ChangeReason, img_idx: int, anno_idx: int, diff: Optional[ChangeDiff]):
         was_clean = self.dirty is False
         self.dirty = True
-        self.cmd_manager.push_change(self.model, CommandManager.Command(
+        self.cmd_manager._push_change(self.model, CommandManager.Command(
             reason=reason,
             img_index=img_idx,
             anno_index=anno_idx,
             diff=diff), mark_dirty=was_clean)
+        for w in self.watchers:
+            w.model_changed()
 
     def remove_annotation(self, img_idx: int, anno_idx: int):
         diff = ChangeDiff()

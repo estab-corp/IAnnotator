@@ -6,7 +6,6 @@ from typing import Tuple, Optional
 from formats import available_formats
 from project.project import Project, ProjectWatcher
 from project.model import Model
-from project.cmd_manager import CommandManager, ChangeReason, ChangeDiff
 from annotator.image_tree_widget import ImageTreeWidget
 from annotator.canvas import CanvasImage, CanvasWatcher
 from annotator.inspector import AnnotationsInspector
@@ -255,6 +254,13 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.edit_menu.entryconfig("Duplicate", state='active')
         self.image_tree.update_selected_annotation(index)
 
+    def model_changed(self):
+        s = 'disabled' if self.project.cmd_manager.num_next_commands() == 0 else 'active'
+        self.edit_menu.entryconfig("Redo", state=s)
+
+        s = 'disabled' if self.project.cmd_manager.num_prev_commands() == 0 else 'active'
+        self.edit_menu.entryconfig("Undo", state=s)
+
     def annotation_list_changed(self, img_index: int):
         _, anno_idx = self.image_tree.get_selected_tuple()
         self.inspector.update_annotation(anno_idx)
@@ -271,26 +277,6 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
     def annotation_is_changing(self, img_idx: int, anno_idx: int):
         self.inspector.annotation_is_changing(img_idx, anno_idx)
 
-    def annotations_changed(self, anno_index: int,  reason: ChangeReason, commit: bool = True, diff: Optional[ChangeDiff] = None):
-        # only used for annotation paste
-        self.inspector.update_annotation(anno_index)
-        self.canvas.draw_annotations()
-        self.inspector.update_classes_list(self.project.model)
-
-        # need to get this before updating image list
-        current_selected_image, _ = self.image_tree.get_selected_tuple()
-        self.image_tree.update_image_list(self.project.model)
-        if commit:
-            was_clean = self.project.dirty is False
-            self.project.dirty = True
-            self.project.cmd_manager.push_change(self.project.model, CommandManager.Command(
-                reason,
-                img_index=current_selected_image,
-                anno_index=anno_index,
-                diff=diff), mark_dirty=was_clean)
-            self.edit_menu.entryconfig("Undo", state='active')
-            self.edit_menu.entryconfig("Redo", state='disabled')
-
     def undo(self, _=None):
         if self.project.cmd_manager.num_prev_commands() == 0:
             self.edit_menu.entryconfig("Undo", state='disabled')
@@ -303,9 +289,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         if img_idx != -1:
             self.inspector.update_inspector_image(img_idx)
             self.inspector.update_classes_list(self.project.model)
-        self.edit_menu.entryconfig("Redo", state='active')
-        if self.project.cmd_manager.num_prev_commands() == 0:
-            self.edit_menu.entryconfig("Undo", state='disabled')
+        self.model_changed()
 
     def redo(self, _=None):
         self.project.cmd_manager.redo(self.project.model)
@@ -315,9 +299,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
             self.inspector.update_inspector_image(img_idx)
         self.inspector.update_classes_list(self.project.model)
         self.image_tree.update_image_list(self.project.model)
-        self.edit_menu.entryconfig("Undo", state='active')
-        if self.project.cmd_manager.num_next_commands() == 0:
-            self.edit_menu.entryconfig("Redo", state='disabled')
+        self.model_changed()
 
     def duplicate_annotation(self, _=None):
         img_idx, _ = self.image_tree.get_selected_tuple()
@@ -351,14 +333,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         new_anno.x += 30
         new_anno.y += 30
         img_idx, _ = self.image_tree.get_selected_tuple()
-        image = self.project.model.images[img_idx]
-        image.annotations.append(new_anno)
-        diff = ChangeDiff()
-        diff.annotation = new_anno
-        new_index = len(image.annotations)-1
-        self.annotations_changed(
-            new_index, reason=ChangeReason.ANNO_ADDED, diff=diff)
-        self.annotations_selection_changed(new_index)
+        self.project.add_annotation(img_idx, new_anno)
 
     def remove_selected_image(self, _=None):
         img_idx, _ = self.image_tree.get_selected_tuple()
