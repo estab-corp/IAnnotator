@@ -6,7 +6,7 @@ from typing import Tuple, Optional
 from formats import available_formats
 from project.project import Project, ProjectWatcher
 from project.model import Model
-from project.undo_manager import UndoManager, ChangeReason, ChangeDiff
+from project.cmd_manager import CommandManager, ChangeReason, ChangeDiff
 from annotator.image_tree_widget import ImageTreeWidget
 from annotator.canvas import CanvasImage, CanvasWatcher
 from annotator.inspector import AnnotationsInspector
@@ -276,7 +276,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         if commit:
             was_clean = self.project.dirty is False
             self.project.dirty = True
-            self.project.undo_manager.push_change(UndoManager.Command(
+            self.project.cmd_manager.push_change(CommandManager.Command(
                 reason,
                 img_index=current_selected_image,
                 anno_index=anno_index,
@@ -285,10 +285,10 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
             self.edit_menu.entryconfig("Redo", state='disabled')
 
     def undo(self, _=None):
-        if self.project.undo_manager.num_prev_commands() == 0:
+        if self.project.cmd_manager.num_prev_commands() == 0:
             self.edit_menu.entryconfig("Undo", state='disabled')
             return
-        if self.project.undo_manager.undo(self.project.model):
+        if self.project.cmd_manager.undo(self.project.model):
             self.project.dirty = False
         self.image_tree.update_image_list(self.project.model)
         img_idx, _ = self.image_tree.get_selected_tuple()
@@ -297,11 +297,11 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
             self.inspector.update_inspector_image(img_idx)
             self.inspector.update_classes_list(self.project.model)
         self.edit_menu.entryconfig("Redo", state='active')
-        if self.project.undo_manager.num_prev_commands() == 0:
+        if self.project.cmd_manager.num_prev_commands() == 0:
             self.edit_menu.entryconfig("Undo", state='disabled')
 
     def redo(self, _=None):
-        self.project.undo_manager.redo(self.project.model)
+        self.project.cmd_manager.redo(self.project.model)
         self.canvas.draw_annotations()
         img_idx, _ = self.image_tree.get_selected_tuple()
         if img_idx != -1:
@@ -309,7 +309,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.inspector.update_classes_list(self.project.model)
         self.image_tree.update_image_list(self.project.model)
         self.edit_menu.entryconfig("Undo", state='active')
-        if self.project.undo_manager.num_next_commands() == 0:
+        if self.project.cmd_manager.num_next_commands() == 0:
             self.edit_menu.entryconfig("Redo", state='disabled')
 
     def duplicate_annotation(self, _=None):

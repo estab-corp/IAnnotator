@@ -1,5 +1,5 @@
 from project.model import Model
-from project.undo_manager import UndoManager, ChangeDiff, ChangeReason
+from project.cmd_manager import CommandManager, ChangeDiff, ChangeReason
 from formats import export_to
 from abc import ABC, abstractmethod
 from typing import List, Optional
@@ -24,7 +24,7 @@ class Project:
         self.json_file: str = ""
         self.model = model
         self.dirty = False
-        self.undo_manager = UndoManager()
+        self.cmd_manager = CommandManager()
         self.watchers: List[ProjectWatcher] = []
 
     def get_folder(self) -> str:
@@ -56,7 +56,7 @@ class Project:
     def _commit(self, reason: ChangeReason, img_idx: int, anno_idx: int, diff: Optional[ChangeDiff]):
         was_clean = self.dirty is False
         self.dirty = True
-        self.undo_manager.push_change(UndoManager.Command(
+        self.cmd_manager.push_change(CommandManager.Command(
             reason=reason,
             img_index=img_idx,
             anno_index=anno_idx,

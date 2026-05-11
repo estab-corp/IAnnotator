@@ -28,7 +28,7 @@ class ChangeDiff:
         return f"dx={self.x} dy={self.y} dw={self.w} dh={self.h} label={self.prev_label}"
 
 
-class UndoManager:
+class CommandManager:
     class Command:
         def __init__(self, reason: ChangeReason, img_index: int, anno_index: int, diff: Optional[ChangeDiff] = None):
             self.reason = reason
@@ -41,7 +41,7 @@ class UndoManager:
             return f"img={self.img_index} anno={self.anno_index} reason={self.reason.name} diff={self.diff}"
 
     def __init__(self):
-        self.commands: List[UndoManager.Command] = []
+        self.commands: List[CommandManager.Command] = []
         self.head: int = 0
 
     def push_change(self, change: Command, mark_dirty: bool):
@@ -60,7 +60,7 @@ class UndoManager:
         return len(self.commands)-self.head
 
     def undo(self, model: Model) -> bool:
-        cmd: UndoManager.Command = self.commands[self.head-1]
+        cmd: CommandManager.Command = self.commands[self.head-1]
         self._undo_cmd(model, cmd)
         self.head -= 1
         return cmd._mark_dirty
@@ -100,7 +100,7 @@ class UndoManager:
     def redo(self, model: Model):
         if len(self.commands) == 0 or self.head == len(self.commands):
             return
-        cmd: UndoManager.Command = self.commands[self.head]
+        cmd: CommandManager.Command = self.commands[self.head]
         self._redo_cmd(model, cmd)
         self.head += 1
 

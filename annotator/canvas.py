@@ -3,7 +3,7 @@ from typing import Tuple, Optional
 import PIL.Image
 from PIL import ImageTk
 from project.project import Project
-from project.undo_manager import ChangeReason, ChangeDiff
+from project.cmd_manager import ChangeReason, ChangeDiff
 from abc import ABC, abstractmethod
 
 
