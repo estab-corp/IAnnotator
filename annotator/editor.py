@@ -11,11 +11,6 @@ from annotator.canvas import CanvasImage, CanvasWatcher
 from annotator.inspector import AnnotationsInspector
 
 
-class CopyPasteBuffer:
-    def __init__(self, annotation: Model.Image.Annotation):
-        self.annotation = annotation
-
-
 class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
     def __init__(self, project: Project, **kwargs):
         super().__init__(**kwargs)
@@ -28,7 +23,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.createcommand("tk::mac::Quit", self.on_closing)
         self.update_title()
         self.focus_force()
-        self._copy_buffer: Optional[CopyPasteBuffer] = None
+        self._copy_buffer: Optional[Model.Image.Annotation] = None
 
     def update_title(self):
         file_name = self.project.json_file
@@ -315,21 +310,19 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
 
     def cmd_cut(self, _=None):
         img_idx, anno_idx = self.image_tree.get_selected_tuple()
-        self._copy_buffer = CopyPasteBuffer(
-            self.project.model.images[img_idx].annotations[anno_idx])
+        self._copy_buffer = self.project.model.images[img_idx].annotations[anno_idx]
         self.enable_paste(True)
         self.remove_selected_anno()
 
     def cmd_copy(self, _=None):
         img_idx, anno_idx = self.image_tree.get_selected_tuple()
-        self._copy_buffer = CopyPasteBuffer(
-            self.project.model.images[img_idx].annotations[anno_idx])
+        self._copy_buffer = self.project.model.images[img_idx].annotations[anno_idx]
         self.enable_paste(True)
 
     def cmd_paste(self, _=None):
         if self._copy_buffer is None:
             return
-        new_anno = self._copy_buffer.annotation.copy()
+        new_anno = self._copy_buffer.copy()
         new_anno.x += 30
         new_anno.y += 30
         img_idx, _ = self.image_tree.get_selected_tuple()
