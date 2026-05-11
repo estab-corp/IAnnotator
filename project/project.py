@@ -56,27 +56,21 @@ class Project:
     def _commit(self, reason: ChangeReason, img_idx: int, anno_idx: int, diff: Optional[ChangeDiff]):
         was_clean = self.dirty is False
         self.dirty = True
-        self.cmd_manager.push_change(CommandManager.Command(
+        self.cmd_manager.push_change(self.model, CommandManager.Command(
             reason=reason,
             img_index=img_idx,
             anno_index=anno_idx,
             diff=diff), mark_dirty=was_clean)
 
     def remove_annotation(self, img_idx: int, anno_idx: int):
-        delete_anno = self.model.images[img_idx].annotations[anno_idx]
-        del self.model.images[img_idx].annotations[anno_idx]
-
         diff = ChangeDiff()
-        diff.annotation = delete_anno
-
+        diff.annotation = self.model.images[img_idx].annotations[anno_idx]
         self._commit(reason=ChangeReason.ANNO_DELETED,
                      img_idx=img_idx, anno_idx=anno_idx, diff=diff)
         self._notify_annotation_list_changed(img_idx)
 
     def add_annotation(self, img_idx: int, annotation: Model.Image.Annotation):
         image = self.model.images[img_idx]
-        image.annotations.append(annotation)
-
         new_anno_index = len(image.annotations)-1
         diff = ChangeDiff()
         diff.annotation = annotation
@@ -88,23 +82,19 @@ class Project:
         new_img = Model.Image()
         new_img.filename = img_path
         new_img_index = len(self.model.images)
-        self.model.images.append(new_img)
         diff = ChangeDiff()
         diff.image = new_img
         self._commit(reason=ChangeReason.IMG_ADDED,
                      img_idx=new_img_index, anno_idx=-1, diff=diff)
 
     def remove_image(self, img_idx: int):
-        deleted_image = self.model.images[img_idx]
-        del self.model.images[img_idx]
         diff = ChangeDiff()
-        diff.image = deleted_image
+        diff.image = self.model.images[img_idx]
         self._commit(reason=ChangeReason.IMG_DELETED,
                      img_idx=img_idx, anno_idx=-1, diff=diff)
 
     def duplicate_image(self, after_img_idx: int) -> int:
         new_image = self.model.images[after_img_idx].copy()
-        self.model.images.insert(after_img_idx+1, new_image)
         diff = ChangeDiff()
         diff.image = new_image
         self._commit(reason=ChangeReason.IMG_ADDED,

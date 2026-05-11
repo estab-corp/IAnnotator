@@ -272,6 +272,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.inspector.annotation_is_changing(img_idx, anno_idx)
 
     def annotations_changed(self, anno_index: int,  reason: ChangeReason, commit: bool = True, diff: Optional[ChangeDiff] = None):
+        # only used for annotation paste
         self.inspector.update_annotation(anno_index)
         self.canvas.draw_annotations()
         self.inspector.update_classes_list(self.project.model)
@@ -282,7 +283,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         if commit:
             was_clean = self.project.dirty is False
             self.project.dirty = True
-            self.project.cmd_manager.push_change(CommandManager.Command(
+            self.project.cmd_manager.push_change(self.project.model, CommandManager.Command(
                 reason,
                 img_index=current_selected_image,
                 anno_index=anno_index,

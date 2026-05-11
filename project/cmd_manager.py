@@ -45,7 +45,10 @@ class CommandManager:
         self.commands: List[CommandManager.Command] = []
         self.head: int = 0
 
-    def push_change(self, change: Command, mark_dirty: bool):
+    def push_change(self, model: Model, change: Command, mark_dirty: bool):
+        # this change is already performed by the canvas itself, don't perform it twice!
+        if change.reason != ChangeReason.ANNO_GEOMETRY:
+            self._redo_cmd(model, change)
         change._mark_dirty = mark_dirty
         last_len = len(self.commands)
         if self.head != last_len:
