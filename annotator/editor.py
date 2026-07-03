@@ -225,10 +225,11 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.project.save_as_file(filename, format_)
 
     def img_selection_changed(self, _):
-        sel_img_index, sel_anno_index = self.image_tree.get_selected_tuple()
+        sel_img_index = self.image_tree.get_selected_img_idx()
         if sel_img_index == -1:
             self.enable_duplicate_remove_selected_image(False)
             return
+        sel_anno_index = self.image_tree.get_selected_annotation()
 
         img_path = self.project.get_image_path(sel_img_index)
         img_ok = self.canvas.show_image(
@@ -238,7 +239,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.inspector.update_inspector_image(sel_img_index)
         if sel_anno_index != -1:
             self.annotations_selection_changed(sel_anno_index)
-        _, anno_idx = self.image_tree.get_selected_tuple()
+        anno_idx = self.image_tree.get_selected_annotation()
         self.enable_copy_cut_duplicate(state=anno_idx != -1)
         self.enable_duplicate_remove_selected_image(True)
 
@@ -257,7 +258,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.edit_menu.entryconfig("Undo", state=s)
 
     def annotation_list_changed(self, img_index: int):
-        _, anno_idx = self.image_tree.get_selected_tuple()
+        anno_idx = self.image_tree.get_selected_annotation()
         self.inspector.update_annotation(anno_idx)
         self.canvas.draw_annotations()
         self.inspector.update_classes_list(self.project.model)
@@ -281,7 +282,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         if self.project.cmd_manager.undo(self.project.model):
             self.project.dirty = False
         self.image_tree.update_image_list(self.project.model)
-        img_idx, _ = self.image_tree.get_selected_tuple()
+        img_idx = self.image_tree.get_selected_img_idx()
 
         if img_idx != -1:
             self.inspector.update_inspector_image(img_idx)
@@ -291,7 +292,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
     def redo(self, _=None):
         self.project.cmd_manager.redo(self.project.model)
         self.canvas.draw_annotations()
-        img_idx, _ = self.image_tree.get_selected_tuple()
+        img_idx = self.image_tree.get_selected_img_idx()
         if img_idx != -1:
             self.inspector.update_inspector_image(img_idx)
         self.inspector.update_classes_list(self.project.model)
@@ -299,7 +300,7 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.model_changed()
 
     def duplicate_annotation(self, _=None):
-        img_idx, _ = self.image_tree.get_selected_tuple()
+        img_idx = self.image_tree.get_selected_img_idx()
         anno_index = self.inspector.current_annotation_index
         self.project.duplicate_annotation(img_idx=img_idx, anno_idx=anno_index)
         image = self.project.model.images[img_idx]
@@ -307,17 +308,20 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.annotations_selection_changed(new_index)
 
     def remove_selected_anno(self):
-        img_idx, anno_idx = self.image_tree.get_selected_tuple()
+        img_idx = self.image_tree.get_selected_img_idx()
+        anno_idx = self.image_tree.get_selected_annotation()
         self.project.remove_annotation(img_idx, anno_idx)
 
     def cmd_cut(self, _=None):
-        img_idx, anno_idx = self.image_tree.get_selected_tuple()
+        img_idx = self.image_tree.get_selected_img_idx()
+        anno_idx = self.image_tree.get_selected_annotation()
         self._copy_buffer = self.project.model.images[img_idx].annotations[anno_idx]
         self.enable_paste(True)
         self.remove_selected_anno()
 
     def cmd_copy(self, _=None):
-        img_idx, anno_idx = self.image_tree.get_selected_tuple()
+        img_idx = self.image_tree.get_selected_img_idx()
+        anno_idx = self.image_tree.get_selected_annotation()
         self._copy_buffer = self.project.model.images[img_idx].annotations[anno_idx]
         self.enable_paste(True)
 
@@ -327,17 +331,17 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         new_anno = self._copy_buffer.copy()
         new_anno.x += 30
         new_anno.y += 30
-        img_idx, _ = self.image_tree.get_selected_tuple()
+        img_idx = self.image_tree.get_selected_img_idx()
         self.project.add_annotation(img_idx, new_anno)
 
     def remove_selected_image(self, _=None):
-        img_idx, _ = self.image_tree.get_selected_tuple()
+        img_idx = self.image_tree.get_selected_img_idx()
         assert img_idx != -1
         self.project.remove_image(img_idx)
         self.image_tree.update_image_list(self.project.model)
 
     def duplicate_selected_image(self, _=None):
-        img_idx, _ = self.image_tree.get_selected_tuple()
+        img_idx = self.image_tree.get_selected_img_idx()
         assert img_idx != -1
         new_img_idx = self.project.duplicate_image(img_idx)
         self.image_tree.update_image_list(self.project.model)

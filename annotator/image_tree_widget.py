@@ -28,7 +28,7 @@ class ImageTreeWidget(ttk.Treeview):
         self.delete(*self.get_children())
 
     def select_image_index(self, img_index: int):
-        cur_img_index, _ = self.get_selected_tuple()
+        cur_img_index = self.get_selected_img_idx()
         if cur_img_index == img_index:
             return
         self.selection_set(f"I{img_index}")
@@ -38,13 +38,21 @@ class ImageTreeWidget(ttk.Treeview):
         self.item(img_item_index, tags="error")
 
     def update_selected_annotation(self, anno_index: int):
-        img_index, cur_anno_index = self.get_selected_tuple()
+        img_index, cur_anno_index = self._get_selected_tuple()
         if anno_index == cur_anno_index:
             return
         new_id = f"A{anno_index}:I{img_index}"
         self.selection_set(new_id)
 
-    def get_selected_tuple(self) -> Tuple[int, int]:
+    def get_selected_img_idx(self) -> int:
+        img_idx, _ = self._get_selected_tuple()
+        return img_idx
+
+    def get_selected_annotation(self) -> int:
+        _, anno_id = self._get_selected_tuple()
+        return anno_id
+
+    def _get_selected_tuple(self) -> Tuple[int, int]:
         if len(self.selection()) == 0:
             return (-1, -1)
         item_iid: str = self.selection()[0]
@@ -93,7 +101,7 @@ class ImageTreeWidget(ttk.Treeview):
         return ret
 
     def update_image_list(self, model: Model):
-        sel_img, sel_anno = self.get_selected_tuple()
+        sel_img, sel_anno = self._get_selected_tuple()
         open_states = self._get_open_states()
         self.delete(*self.get_children())
         for i, img in enumerate(model.images):
