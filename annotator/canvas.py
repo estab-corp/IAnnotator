@@ -1,5 +1,5 @@
 import tkinter as tk
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Set
 import PIL.Image
 from PIL import ImageTk
 from project.project import Project
@@ -16,11 +16,11 @@ class CanvasWatcher(ABC):
         pass
 
     @abstractmethod
-    def annotation_is_changing(self, img_idx: int, anno_idx: int):
+    def annotation_is_changing(self, img_idx: int, anno_indices: Set[int]):
         pass
 
     @abstractmethod
-    def canvas_selection_changed(self, anno_idx: int):
+    def canvas_selection_changed(self, anno_indices: Set[int]):
         pass
 
 
@@ -127,7 +127,7 @@ class CanvasImage(tk.Canvas):
             rulers_pos = (event.x, event.y)
         self.draw_rulers(rulers_pos)
         self.watcher.annotation_is_changing(
-            self.img_idx, anno_idx=self.selected_annotation_idx)
+            self.img_idx, {self.selected_annotation_idx})
 
     def on_mouse_release(self, event):
         mdl_img = self.project.model.images[self.img_idx]
@@ -194,7 +194,8 @@ class CanvasImage(tk.Canvas):
             self.move_origin_offset_screen = (event.x, event.y)
             return
         if prev_selected_annotation_idx != self.selected_annotation_idx:
-            self.watcher.canvas_selection_changed(self.selected_annotation_idx)
+            self.watcher.canvas_selection_changed(
+                {self.selected_annotation_idx})
         annotation = mdl_img.annotations[self.selected_annotation_idx]
         self.start_move_w = annotation.width
         self.start_move_h = annotation.height

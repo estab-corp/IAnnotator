@@ -2,7 +2,7 @@ import os
 import functools
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Set
 from formats import available_formats
 from project.project import Project, ProjectWatcher
 from project.model import Model
@@ -263,14 +263,16 @@ class AnnotatorWindow(tk.Tk, ProjectWatcher, CanvasWatcher):
         self.inspector.update_classes_list(self.project.model)
         self.image_tree.update_image_list(self.project.model)
 
-    def canvas_selection_changed(self, anno_idx: int):
-        self.image_tree.update_selected_annotation(anno_idx)
+    def canvas_selection_changed(self, anno_indices: Set[int]):
+        for anno_id in anno_indices:
+            self.image_tree.update_selected_annotation(anno_id)
 
     def mouse_pos_changed(self, coords: Tuple[int, int]):
         self.inspector.mouse_pos_changed(coords)
 
-    def annotation_is_changing(self, img_idx: int, anno_idx: int):
-        self.inspector.annotation_is_changing(img_idx, anno_idx)
+    def annotation_is_changing(self, img_idx: int, anno_indices: Set[int]):
+        for anno_id in anno_indices:
+            self.inspector.annotation_is_changing(img_idx, anno_id)
 
     def undo(self, _=None):
         if self.project.cmd_manager.num_prev_commands() == 0:
