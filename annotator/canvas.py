@@ -34,7 +34,7 @@ class CanvasImage(tk.Canvas):
         self.img_load_error = False
         self.image_id = None
         self.image = None
-        self.selected_annotation_idx = -1
+        self.selected_annotation_indices: Set[int] = set()
         self.img_idx = -1
         self.move_origin_offset_screen = (0, 0)
         self.move_origin_offset_img = (0, 0)
@@ -64,7 +64,7 @@ class CanvasImage(tk.Canvas):
     def reset(self):
         self.clear_annotations()
         self.img_load_error = False
-        self.selected_annotation_idx = -1
+        self.selected_annotation_indices.clear()
         self.is_resizing = False
         self.selection_area = None
         self._move_moved_at_least_once_in_selection = False
@@ -95,15 +95,16 @@ class CanvasImage(tk.Canvas):
     def _calc_new_rect(self, coords_in_img):
         mdl_img = self.project.model.images[self.img_idx]
         assert mdl_img
-        annotation = mdl_img.annotations[self.selected_annotation_idx]
-        if self.is_resizing:
-            annotation.width = round(coords_in_img[0]-annotation.x, 2)
-            annotation.height = round(coords_in_img[1]-annotation.y, 2)
-        else:
-            annotation.x = round(
-                coords_in_img[0] - self.move_origin_offset_img[0], 2)
-            annotation.y = round(
-                coords_in_img[1] - self.move_origin_offset_img[1], 2)
+        for sel_idx in self.selected_annotation_indices:
+            annotation = mdl_img.annotations[sel_idx]
+            if self.is_resizing:
+                annotation.width = round(coords_in_img[0]-annotation.x, 2)
+                annotation.height = round(coords_in_img[1]-annotation.y, 2)
+            else:
+                annotation.x = round(
+                    coords_in_img[0] - self.move_origin_offset_img[0], 2)
+                annotation.y = round(
+                    coords_in_img[1] - self.move_origin_offset_img[1], 2)
 
     def on_mouse_drag(self, event):
         if self.selection_area is not None:
@@ -116,7 +117,7 @@ class CanvasImage(tk.Canvas):
             return
         coords_in_img = self.coords_view_to_img((event.x, event.y))
         self.watcher.mouse_pos_changed(coords_in_img)
-        if self.selected_annotation_idx < 0:
+        if len(self.selected_annotation_indices) == 0:
             return
         self._calc_new_rect(coords_in_img)
         self.draw_annotations()
@@ -127,7 +128,7 @@ class CanvasImage(tk.Canvas):
             rulers_pos = (event.x, event.y)
         self.draw_rulers(rulers_pos)
         self.watcher.annotation_is_changing(
-            self.img_idx, {self.selected_annotation_idx})
+            self.img_idx, self.selected_annotation_indices)
 
     def on_mouse_release(self, event):
         mdl_img = self.project.model.images[self.img_idx]
@@ -139,28 +140,29 @@ class CanvasImage(tk.Canvas):
             self.selection_area = None
             self._move_moved_at_least_once_in_selection = False
             return
-        if not self.is_dragging or self.selected_annotation_idx == -1:
+        if not self.is_dragging or len(self.selected_annotation_indices) == 0:
             return
         self.is_dragging = False
         coords_in_img = self.coords_view_to_img((event.x, event.y))
         self._calc_new_rect(coords_in_img)
 
-        annotation = mdl_img.annotations[self.selected_annotation_idx]
-        diff = ChangeDiff()
-        diff.x = annotation.x - self.start_move_x
-        diff.y = annotation.y - self.start_move_y
-        diff.w = annotation.width - self.start_move_w
-        diff.h = annotation.height - self.start_move_h
-        self.project.update_annotation(
-            img_idx=self.img_idx, anno_idx=self.selected_annotation_idx, diff=diff, reason=ChangeReason.ANNO_GEOMETRY)
+        for sel_idx in self.selected_annotation_indices:
+            annotation = mdl_img.annotations[sel_idx]
+            diff = ChangeDiff()
+            diff.x = annotation.x - self.start_move_x
+            diff.y = annotation.y - self.start_move_y
+            diff.w = annotation.width - self.start_move_w
+            diff.h = annotation.height - self.start_move_h
+            self.project.update_annotation(
+                img_idx=self.img_idx, anno_idx=sel_idx, diff=diff, reason=ChangeReason.ANNO_GEOMETRY)
 
     def on_mouse_click(self, event):
         if self.source_image is None:
             return
         mdl_img = self.project.model.images[self.img_idx]
         assert mdl_img
-        prev_selected_annotation_idx = self.selected_annotation_idx
-        self.selected_annotation_idx = -1
+        prev_selected_annotation_idx = self.selected_annotation_indices
+        self.selected_annotation_indices.clear()
         img_event_coords = self.coords_view_to_img((event.x, event.y))
         for a_id, annotation in enumerate(mdl_img.annotations):
             x, y = self.coords_img_to_view((annotation.x, annotation.y))
@@ -171,13 +173,13 @@ class CanvasImage(tk.Canvas):
             h_y = y+h
             h_size = HANDLE_SIZE/2
             if h_x-h_size <= event.x <= h_x+h_size and h_y-h_size <= event.y <= h_y+h_size:
-                self.selected_annotation_idx = a_id
+                self.selected_annotation_indices.add(a_id)
                 self.is_resizing = True
                 self.start_move_x = annotation.x
                 self.start_move_y = annotation.y
                 break
             if x <= event.x <= x+w and y <= event.y <= y+h:
-                self.selected_annotation_idx = a_id
+                self.selected_annotation_indices.add(a_id)
                 self.is_resizing = False
 
                 self.move_origin_offset_screen = (event.x-x, event.y-y)
@@ -188,15 +190,16 @@ class CanvasImage(tk.Canvas):
                 self.start_move_y = round(
                     img_event_coords[1] - self.move_origin_offset_img[1], 2)
                 break
-        if self.selected_annotation_idx == -1:
+        if len(self.selected_annotation_indices) == 0:
             assert self.selection_area is None
             self.selection_area = (0, 0)
             self.move_origin_offset_screen = (event.x, event.y)
             return
-        if prev_selected_annotation_idx != self.selected_annotation_idx:
+        if prev_selected_annotation_idx != self.selected_annotation_indices:
             self.watcher.canvas_selection_changed(
-                {self.selected_annotation_idx})
-        annotation = mdl_img.annotations[self.selected_annotation_idx]
+                self.selected_annotation_indices)
+        first_anno_idx = next(iter(self.selected_annotation_indices))
+        annotation = mdl_img.annotations[first_anno_idx]
         self.start_move_w = annotation.width
         self.start_move_h = annotation.height
         self.draw_annotations()
@@ -237,7 +240,7 @@ class CanvasImage(tk.Canvas):
     def show_image(self, filename: str, img_idx: int) -> bool:
         image = self.project.model.images[img_idx]
         self.img_idx = img_idx
-        self.selected_annotation_idx = -1
+        self.selected_annotation_indices.clear()
         self.is_resizing = False
         self._delete_previous_image()
         try:
@@ -278,10 +281,10 @@ class CanvasImage(tk.Canvas):
             if b_x0 <= x <= b_x1 and x+w < b_x1:
                 if b_y0 <= y <= b_y1 and y+h < b_y1:
                     selected.append(a_id)
-        if len(selected) > 0:
-            self.select_annotation(selected[0])
-            self.watcher.canvas_selection_changed(
-                {self.selected_annotation_idx})
+
+        self.selected_annotation_indices = set(selected)
+        self.draw_annotations()
+        self.watcher.canvas_selection_changed(self.selected_annotation_indices)
 
     def draw_selection_area(self):
         assert self.selection_area
@@ -315,14 +318,14 @@ class CanvasImage(tk.Canvas):
     def select_annotation(self, anno_index: int):
         if self.img_load_error:
             return
-        self.selected_annotation_idx = anno_index
+        self.selected_annotation_indices.add(anno_index)
         self.draw_annotations()
 
     def draw_annotations(self):
         self.clear_annotations()
         mdl_img = self.project.model.images[self.img_idx]
         assert mdl_img
-
+        print(f"draw_annotations: {self.selected_annotation_indices}")
         self.rect_ids = []
         self.text_ids = []
         self.handle_ids = []
@@ -330,7 +333,7 @@ class CanvasImage(tk.Canvas):
             x = annotation.x
             y = annotation.y
             color = "lightblue"
-            if a_id == self.selected_annotation_idx:
+            if a_id in self.selected_annotation_indices:
                 color = "blue"
             r_x0, r_y0 = self.coords_img_to_view((x, y))
             r_x1, r_y1 = self.coords_img_to_view(
