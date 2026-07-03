@@ -47,6 +47,8 @@ class CanvasImage(tk.Canvas):
         # when resizing, this will store original height
         self.start_move_h = 0
         self.is_resizing = False
+        self.selection_area: Optional[Tuple[int, int]] = None
+        self._move_moved_at_least_once_in_selection = False
         self.rect_ids = []
         self.text_ids = []
         self.handle_ids = []
@@ -64,6 +66,8 @@ class CanvasImage(tk.Canvas):
         self.img_load_error = False
         self.selected_annotation_idx = -1
         self.is_resizing = False
+        self.selection_area = None
+        self._move_moved_at_least_once_in_selection = False
         self._delete_previous_image()
 
     def coords_view_to_img(self, coords) -> Tuple[float, float]:
@@ -102,6 +106,11 @@ class CanvasImage(tk.Canvas):
                 coords_in_img[1] - self.move_origin_offset_img[1], 2)
 
     def on_mouse_drag(self, event):
+        if self.selection_area is not None:
+            self._move_moved_at_least_once_in_selection = True
+            self.selection_area = (event.x, event.y)
+            self.draw_selection_area()
+            return
         self.is_dragging = True
         if self.source_image is None:
             return
@@ -123,6 +132,13 @@ class CanvasImage(tk.Canvas):
     def on_mouse_release(self, event):
         mdl_img = self.project.model.images[self.img_idx]
         assert mdl_img
+        if self.selection_area is not None:
+            self.delete("selection")
+            if self._move_moved_at_least_once_in_selection:
+                self.update_selection()
+            self.selection_area = None
+            self._move_moved_at_least_once_in_selection = False
+            return
         if not self.is_dragging or self.selected_annotation_idx == -1:
             return
         self.is_dragging = False
@@ -173,6 +189,9 @@ class CanvasImage(tk.Canvas):
                     img_event_coords[1] - self.move_origin_offset_img[1], 2)
                 break
         if self.selected_annotation_idx == -1:
+            assert self.selection_area is None
+            self.selection_area = (0, 0)
+            self.move_origin_offset_screen = (event.x, event.y)
             return
         if prev_selected_annotation_idx != self.selected_annotation_idx:
             self.watcher.canvas_selection_changed(self.selected_annotation_idx)
@@ -238,6 +257,39 @@ class CanvasImage(tk.Canvas):
         image.loaded_width = self.source_image.size[0]
         image.loaded_height = self.source_image.size[1]
         return True
+
+    def update_selection(self):
+        assert self.selection_area
+        b_x0, b_y0 = self.coords_view_to_img(self.move_origin_offset_screen)
+        b_x1, b_y1 = self.coords_view_to_img(self.selection_area)
+        if b_x1 < b_x0:
+            b_x0, b_x1 = b_x1, b_x0
+        if b_y1 < b_y0:
+            b_y0, b_y1 = b_y1, b_y0
+
+        mdl_img = self.project.model.images[self.img_idx]
+        selected = []
+        for a_id, annotation in enumerate(mdl_img.annotations):
+            x = annotation.x
+            y = annotation.y
+            w = annotation.width
+            h = annotation.height
+            if b_x0 <= x <= b_x1 and x+w < b_x1:
+                if b_y0 <= y <= b_y1 and y+h < b_y1:
+                    selected.append(a_id)
+        print(selected)
+
+    def draw_selection_area(self):
+        assert self.selection_area
+        self.delete("selection")
+        color = "red"
+        self.create_rectangle(
+            self.move_origin_offset_screen[0],
+            self.move_origin_offset_screen[1],
+            self.selection_area[0],
+            self.selection_area[1],
+            outline=color,
+            tags="selection")
 
     def draw_rulers(self, mouse_pos):
         self.delete("rulers")
