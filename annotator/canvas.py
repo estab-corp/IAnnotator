@@ -278,7 +278,10 @@ class CanvasImage(tk.Canvas):
             if b_x0 <= x <= b_x1 and x+w < b_x1:
                 if b_y0 <= y <= b_y1 and y+h < b_y1:
                     selected.append(a_id)
-        print(selected)
+        if len(selected) > 0:
+            self.select_annotation(selected[0])
+            self.watcher.canvas_selection_changed(
+                {self.selected_annotation_idx})
 
     def draw_selection_area(self):
         assert self.selection_area
